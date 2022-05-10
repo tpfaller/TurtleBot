@@ -1,0 +1,24 @@
+{
+    "turtlebot":{
+        "title" : "TurtleBot",
+        "intro":{
+            "title-1" : "This is dynamic Title 1",
+            "description-1" : "This is dynamic Description 1",
+            "title-2" : "This is dynamic Title 2",
+            "description-2" : "This is dynamic Description 2",
+            "title-3" : "This is dynamic Title 3",
+            "description-3" : "This is dynamic Description 3"
+        }
+    },
+    "home":{
+        "home" : "Home",
+        "title" : "Welcome!",
+        "subtitle" : "Please choose a game."
+    },
+    "about":{
+        "title" : "Team & Idea"
+    },
+    "intro":{
+        "start" : "Start"
+    }
+}
