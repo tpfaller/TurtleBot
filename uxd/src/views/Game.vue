@@ -43,7 +43,7 @@ export default {
     methods: {
         nextStep() {
             if (this.currentStep + 1 == 1) {
-                this.currentStep++
+                this.currentStep++;
                 this.detectObstacles();
             }
         },
@@ -54,12 +54,15 @@ export default {
             setTimeout(() => this.drawObstacles(), 2000);
         },
         drawObstacles() {
-            this.currentStep++
+            this.currentStep++;
             this.drawCoins();
         },
         drawCoins() {
-            var that = this;
-            setTimeout(function () { that.buttonLoading = false; }, 2000);
+            setTimeout(() => this.setOrder(), 2000);
+        },
+        setOrder(){
+            this.buttonLoading = false;
+            this.currentStep++;
         }
     }
 };

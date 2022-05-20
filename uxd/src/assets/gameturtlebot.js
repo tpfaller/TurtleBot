@@ -22,5 +22,13 @@ export default [
         "description": "turtlebot.game.coins.distribution-description",
         "img": "https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg",
         "action": "game.next"
+    },
+    {
+        "step": "1",
+        "next": "2",
+        "title": "turtlebot.game.figures.order-title",
+        "description": "turtlebot.game.figures.order-description",
+        "img": "https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg",
+        "action": "game.next"
     }
 ];

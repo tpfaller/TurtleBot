@@ -70,7 +70,7 @@ button{
     padding: 0 3rem;
     border: none;
     background: grey;
-    transition: all .3s ease;
+    transition: background-color .3s ease;
     height: 4rem;
 }
 
@@ -114,6 +114,10 @@ button:not([disabled]):hover {
 
 #game-instructions button{
     position: relative;
+}
+
+#game-instructions button.loading{
+    color: transparent;
 }
 
 #game-instructions button.loading:after{

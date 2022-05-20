@@ -19,6 +19,10 @@
             "coins": {
                 "distribution-title": "Münzen werden verteilt...",
                 "distribution-description": "Bitte warte einen Moment. Die Münzen werden verteilt."
+            },
+            "figures": {
+                "order-title": "Reihenfolge festlegen",
+                "order-description": "Tippe die Figuren hier im Spielfeld in deiner gewünschten Reihenfolge an und bestätige mit ‘Fertig’!"
             }
         }
     },

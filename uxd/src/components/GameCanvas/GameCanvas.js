@@ -27,6 +27,7 @@ export default {
         this.resetSnake();
         this.move();
         this.setupObstacles();
+        this.setupHeroes();
         console.log(this.obstacles);
     },
     created() {
@@ -69,6 +70,16 @@ export default {
                 this.boardContext.fill();
                 this.boardContext.closePath();
             });
+        },
+        setupHeroes() {
+            let p = new Path2D('M10 10 h 180 v 80 h -80 Z');
+            this.boardContext.translate(100, 100);
+            this.boardContext.fill(p);
+            var image = new Image();
+            image.onload = function () {
+                this.boardContext.drawImage(this, 0, 0);
+            }
+            image.src = "../src/assets/powerranger.svg";
         },
         getMiddleCellX() {
             return Math.round(this.boardSize[0] / 2);
