@@ -6,7 +6,7 @@ import gameturtlebot from "../assets/gameturtlebot";
     <section class="content game">
         <div id="game-interaction">
             <GameCanvas :cellSize="cellSize" :speed="speed" :isPlaying="isPlaying"
-                :scores="scores" :positionData="positionData" />
+                :scores="scores" :positionData="positionData" :coinSize="coinSize" :coinCount="coinCount" />
         </div>
         <div id="game-instructions">
             <h1 class="title">{{ $t(gameturtlebot[currentStep].title) }}</h1>
@@ -38,7 +38,9 @@ export default {
             currentStep: 0,
             buttonDisabled: false,
             buttonLoading: false,
-            positionData: JSON.parse(JSON.stringify(PosData))
+            positionData: JSON.parse(JSON.stringify(PosData)),
+            coinSize: 50,
+            coinCount: 20
         };
     },
     methods: {
