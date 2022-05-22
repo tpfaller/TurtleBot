@@ -5,7 +5,7 @@ import gameturtlebot from "../assets/gameturtlebot";
 <template>
     <section class="content game">
         <div id="game-interaction">
-            <GameCanvas :cellSize="cellSize" :speed="speed" :isPlaying="isPlaying"
+            <GameCanvas ref="gameCanvas" :cellSize="cellSize" :speed="speed" :isPlaying="isPlaying"
                 :scores="scores" :positionData="positionData" :coinSize="coinSize" :coinCount="coinCount" />
         </div>
         <div id="game-instructions">
@@ -30,7 +30,6 @@ export default {
         GameCanvas
     },
     data() {
-        this.initRos()
         return {
             cellSize: 1,
             speed: 10,
@@ -41,7 +40,8 @@ export default {
             buttonLoading: false,
             positionData: JSON.parse(JSON.stringify(PosData)),
             coinSize: 50,
-            coinCount: 20
+            coinCount: 20,
+            ros: this.initRos()
         };
     },
     methods: {
@@ -62,16 +62,28 @@ export default {
                 console.log('Connection to websocket server closed.');
             });
 
-            var listener = new ROSLIB.Topic({
+            var objectListener = new ROSLIB.Topic({
                 ros : ros,
-                name : '/test',
-                messageType : 'topdown_camera/ObjectPose'
+                name : '/game_objects',
+                messageType : 'topdown_camera/ObjectPoseArray'
             });
 
-            listener.subscribe(function(message) {
-                console.log('Received message on ' + listener.name + ': ' + JSON.stringify(message));
-                listener.unsubscribe();
+            objectListener.subscribe(this.handle_obj_message);
+
+            return ros
+        },
+        handle_obj_message(message) {
+            var objects = {}
+            const width = this.positionData["Spielfeld"][0]
+            const height = this.positionData["Spielfeld"][1]
+            message.objects.forEach(obj => {
+                var position = [
+                    Math.floor(obj.x * width), Math.floor(obj.y * height),
+                    Math.floor(obj.width * width), Math.floor(obj.height * height)
+                ]
+                objects[obj.obj_id] = position
             });
+            this.$refs.gameCanvas.handleObjectPositions(objects)
         },
         nextStep() {
             this.setPositionData();

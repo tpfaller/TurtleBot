@@ -67,6 +67,25 @@ export default {
         reset() {
             //TODO
         },
+        handleObjectPositions(positions) {
+            for(var i = 0; i < this.heroes.length; i++) {
+                var pos = positions[this.heroes_names[i]]
+                if(pos != undefined) {
+                    this.heroes[i] = pos
+                }
+            }
+            var bot_pos = positions['turtlebot']
+            if(bot_pos != undefined) {
+                this.bot = bot_pos
+            }
+            this.obstacles = []
+            for(const [obj_id, pos] of Object.entries(positions)) {
+                if(obj_id.startsWith('obstacle')) {
+                    this.obstacles.push(pos)
+                }
+            }
+            this.move()
+        },
         setupObstacles() {
             this.obstacles.forEach(function (obstacle, i) {
 
@@ -80,6 +99,9 @@ export default {
         },
         drawObstacles() {
             this.obstacles.forEach(obstacle => {
+                if(obstacle == undefined) {
+                    return
+                }
                 this.boardContext.beginPath();
                 this.boardContext.rect(
                     this.cellSize + obstacle[0],
@@ -93,6 +115,9 @@ export default {
             });
 
             this.obstacles.forEach(function (obstacle, i) {
+                if(obstacle == undefined) {
+                    return
+                }
                 /*
                 if (obstacle[2] < obstacle[3]) {
                     this.boardContext.translate(this.positionData["Spielfeld"][0]/2,this.positionData["Spielfeld"][1]/2);
