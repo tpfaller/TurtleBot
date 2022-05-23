@@ -6,9 +6,11 @@ import HomeIcon from '../icons/IconHome.vue';
 <template>
     <div id="nav">
         <router-link to="/">
-            <HomeIcon/>
+            <div class="logo">
+                <img class="logo-img" src="../../assets/images/Logo.svg">
+                <div class="logo-title">{{ $t('coinhunter.title') }}</div>
+            </div>
         </router-link>
-        <div class="text-box">{{ $t('turtlebot.title') }}</div>
         <LanguageSwitcher />
     </div>
 </template>

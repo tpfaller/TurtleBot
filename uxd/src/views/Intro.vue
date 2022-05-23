@@ -3,12 +3,12 @@ import introturtlebot from "../assets/introturtlebot";
 </script>
 
 <template>
-    <section class="content">
+    <section class="content intro">
         <carousel :items-to-show="1">
             <slide v-for="item in introturtlebot" :key="item">
                 <div class="carousel__item">
                     <img :src="item.src">
-                    <h3>{{ $t(item.title) }}</h3>
+                    <h3 class="title">{{ $t(item.title) }}</h3>
                     <p>{{ $t(item.content) }}</p>
                 </div>
             </slide>
@@ -47,8 +47,8 @@ export default {
 .carousel__item {
   min-height: 200px;
   width: 100%;
-  background-color: var(--vc-clr-primary);
-  color:  var(--vc-clr-white);
+  background-color: var(--white);
+  color:  var(--text-color);
   display: flex;
   flex-direction: column;
 }
@@ -61,5 +61,14 @@ export default {
 .carousel__prev--in-active,
 .carousel__next--in-active {
   display: none;
+}
+
+.carousel__prev, .carousel__next{
+    background-color: var(--text-color-primary);
+}
+
+.carousel__viewport{
+    border-radius: 2rem;
+    border: 1px solid var(--border-color);
 }
 </style>
