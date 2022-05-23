@@ -1,6 +1,6 @@
 {
-    "turtlebot": {
-        "title": "TurtleBot",
+    "coinhunter": {
+        "title": "Coinhunter",
         "intro": {
             "title-1": "Das ist die dynamische Überschrift 1",
             "description-1": "Das ist die dynamische Beschreibung  1",
@@ -29,7 +29,9 @@
     "home": {
         "home": "Home",
         "title": "Willkommen!",
-        "subtitle": "Bitte wähle ein Spiel aus."
+        "subtitle": "Spielen & Sammeln",
+        "description": "Bestimme die Route des TurtleBots und nimm dabei die meisten Münzen mit, um den ersten Platz zu erhalten!",
+        "start-game": "Los geht's!"
     },
     "about": {
         "title": "Team & Idee"
@@ -37,7 +39,7 @@
     "intro": {
         "start": "Starten"
     },
-    "game":{
+    "game": {
         "done": "Fertig",
         "next": "Weiter"
     }

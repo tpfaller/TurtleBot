@@ -1,44 +1,17 @@
 <template>
-    <section class="content">
-        <div class="col-container space-between">
+    <section class="content center-v">
+        <div class="col-container col-2">
             <div>
-                <h1>{{ $t('home.title') }}</h1>
-                <h2>{{ $t('home.subtitle') }}</h2>
+                <h1 class="title">{{ $t('home.title') }}</h1>
+                <h2 class="subtitle">{{ $t('home.subtitle') }}</h2>
+                <div>{{ $t('home.description') }}</div>
             </div>
-            <div>
-                <router-link to="/about" custom v-slot="{ navigate }">
-                    <button @click="navigate" @keypress.enter="navigate">{{ $t('about.title') }}</button>
+            <div class="game-col">
+                <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">
+                <router-link to="/intro" custom v-slot="{ navigate }">
+                    <button @click="navigate" @keypress.enter="navigate">{{ $t('home.start-game') }}</button>
                 </router-link>
             </div>
         </div>
-        <div class="col-container games-container">
-            <router-link class="game-container" to="/intro">
-                <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">
-                <h3>{{ $t('turtlebot.title') }}</h3>
-            </router-link>
-        </div>
     </section>
 </template>
-
-<style>
-.game-container{
-    text-decoration: unset;
-    color: unset;
-}
-
-.game-container img{
-    aspect-ratio: 1/1;
-    object-fit: cover;
-    max-width: 15rem;
-}
-
-.games-container{
-    flex-grow: 1;
-    align-items: center;
-    justify-content: center;
-}
-
-.game-container > h3{
-    text-align: center;
-}
-</style>
