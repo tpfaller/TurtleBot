@@ -5,8 +5,8 @@ import gameturtlebot from "../assets/gameturtlebot";
 <template>
     <section class="content game">
         <div id="game-interaction">
-            <GameCanvas ref="gameCanvas" :cellSize="cellSize" :speed="speed" :isPlaying="isPlaying"
-                :scores="scores" :positionData="positionData" :coinSize="coinSize" :coinCount="coinCount" />
+            <GameCanvas ref="gameCanvas" :cellSize="cellSize" :speed="speed" :isPlaying="isPlaying" :scores="scores"
+                :positionData="positionData" :coinSize="coinSize" :coinCount="coinCount" />
         </div>
         <div id="game-instructions">
             <h1 class="title">{{ $t(gameturtlebot[currentStep].title) }}</h1>
@@ -47,28 +47,31 @@ export default {
     methods: {
         initRos() {
             var ros = new ROSLIB.Ros({
-                url : 'ws://localhost:9090'
+                url: 'ws://localhost:9090'
             });
 
-            ros.on('connection', function() {
+            ros.on('connection', function () {
                 console.log('Connected to websocket server.');
             });
 
-            ros.on('error', function(error) {
+            ros.on('error', function (error) {
                 console.log('Error connecting to websocket server: ', error);
             });
 
-            ros.on('close', function() {
+            ros.on('close', function () {
                 console.log('Connection to websocket server closed.');
             });
 
             var objectListener = new ROSLIB.Topic({
-                ros : ros,
-                name : '/game_objects',
-                messageType : 'topdown_camera/ObjectPoseArray'
+                ros: ros,
+                name: '/game_objects',
+                messageType: 'topdown_camera/ObjectPoseArray'
             });
 
             objectListener.subscribe(this.handle_obj_message);
+
+            var goalQueue = ['Captain_America', 'Hulk', 'Iron_Man'];
+            this.goals(ros, goalQueue);
 
             return ros
         },
@@ -111,6 +114,40 @@ export default {
         },
         setPositionData() {
             this.positionData = JSON.parse(JSON.stringify(PosData));
+        },
+        goals(ros, goalQueue) {
+
+            var goalSubscriber = () => {
+                var goalSuccessListener = new ROSLIB.Topic({
+                    ros: ros,
+                    name: '/goal_success',
+                    messageType: 'std_msgs/Bool'
+                });
+
+                goalSuccessListener.subscribe(() => { goalQueue.shift() });
+            }
+            goalSubscriber();
+
+            var goalPublisher = () => {
+
+                var goalListener = new ROSLIB.Topic({
+                    ros: ros,
+                    name: '/current_goal',
+                    messageType: 'std_msgs/String'
+                });
+
+                var goal = function (currentGoal) {
+                    var msg = new ROSLIB.Message({
+                        data: currentGoal
+                    });
+                    goalListener.publish(msg);
+                }
+
+                setInterval(() => {
+                    goal(goalQueue[0]);
+                }, 1000)
+            }
+            goalPublisher();
         }
     }
 };
