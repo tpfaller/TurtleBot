@@ -1,0 +1,7 @@
+tensorboard
+
+torch
+numpy
+Pillow
+torchvision
+segments-ai

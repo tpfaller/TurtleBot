@@ -1,0 +1,6 @@
+__pycache__/
+.idea
+/data
+/checkpoints
+/rsyncs
+/object_detection

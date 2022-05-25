@@ -1,0 +1,146 @@
+import argparse
+import os
+import torch
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+from augmentations import *
+from datasets import SegmentationDataset
+from models import get_model
+from utils import create_dir, bool_flag
+from torchvision.utils import draw_segmentation_masks, make_grid
+
+COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
+
+
+def create_images(images, targets, predictions, writer, epoch) -> None:
+    images = [inv_normalize(x) for x in images]
+    gt = [draw_segmentation_masks(x.to(torch.uint8), y.to(torch.bool), alpha=0.5, colors=COLORS) for x, y in zip(images, targets)]
+    preds = [draw_segmentation_masks(x.to(torch.uint8), y.to(torch.bool), alpha=0.5, colors=COLORS) for x, y in zip(images, predictions)]
+    grid = make_grid(images+gt+preds, nrow=len(images))
+    writer.add_image(f'Epoch_{epoch}', grid)
+    writer.flush()
+
+
+def IoU(preds, targets) -> float:
+    N, c, _, _ = preds.size()
+    intersection = torch.logical_and(preds, targets).view(N,-1).sum(dim=-1).squeeze_()
+    union = torch.logical_or(preds, targets).view(N,-1).sum(dim=-1).squeeze_()
+    IoU = torch.divide(intersection, union)
+    return torch.mean(IoU).item()
+
+
+def eval_one_epoch(model, loader, device, writer: SummaryWriter, epoch) -> dict:
+    model.eval()
+    show_pred_flag, epoch_iou, epoch_loss = True, .0, .0
+    criterion = torch.nn.BCEWithLogitsLoss()
+    for ix, (images, targets) in enumerate(loader):
+        images, targets = images.to(device), targets.to(device)
+        output = model(images)['out']
+        epoch_loss += criterion(output, targets).item()
+        output = output.detach().cpu()
+        idx = torch.argmax(output, dim=1, keepdims=True)
+        preds = torch.zeros_like(output).scatter_(1, idx, 1.)
+        epoch_iou += IoU(preds, targets.detach().cpu())
+        if show_pred_flag:
+            create_images(images.detach().to('cpu'), targets.detach().to('cpu'), preds.detach().to('cpu'), writer, epoch)
+            show_pred_flag = False
+    epoch_loss /= len(loader)
+    epoch_iou /= len(loader)
+    print('IoU: ', epoch_iou, '\nEpoch Loss: ', epoch_loss)
+    writer.add_scalar('Val/IoU', epoch_iou, epoch)
+    writer.add_scalar('Val/Loss', epoch_loss, epoch)
+    return {'Epoch_Loss': epoch_loss, 'Epoch_IoU': epoch_iou}
+
+
+def train_one_epoch(model, optimizer, scheduler, loader, device, writer, epoch) -> None:
+    model.train()
+    criterion = torch.nn.BCEWithLogitsLoss()
+    epoch_loss, epoch_iou = .0, .0
+    for ix, (images, targets) in enumerate(loader):
+        images = images.to(device)
+        targets = targets.to(device)
+
+        optimizer.zero_grad()
+        output = model(images)['out']
+        loss = criterion(output, targets)
+
+        epoch_loss += loss.item()
+        output = output.detach().cpu()
+        idx = torch.argmax(output, dim=1, keepdims=True)
+
+        preds = torch.zeros_like(output).scatter_(1, idx, 1.)
+        epoch_iou += IoU(preds, targets.detach().cpu())
+
+        loss.backward()
+        optimizer.step()
+    epoch_loss /= len(loader)
+    epoch_iou /= len(loader)
+    print('IoU: ', epoch_iou, '\nEpoch Loss: ', epoch_loss)
+    writer.add_scalar('Train/IoU', epoch_iou, epoch)
+    writer.add_scalar('Train/Loss', epoch_loss, epoch)
+    scheduler.step()
+
+
+
+def train_model(args) -> None:
+    ckp_dir = create_dir(args.ckp_dir, args.arch)
+    writer = SummaryWriter(log_dir=os.path.join(ckp_dir, 'runs'))
+    transform_train = CustomCompose([ToTensor(), Resize(400, 400), Jitter(), HorizontalFlip(), Normalize()])
+    transform_val = CustomCompose([ToTensor(), Resize(400, 400), Normalize()])
+
+    data_train = SegmentationDataset(args.data_dir, transform_train)
+    n_classes = data_train.get_num_classes()
+    n_images = len(data_train)
+    data_val = SegmentationDataset(args.data_dir, transform_val)
+    indices = torch.randperm(len(data_train)).tolist()
+    data_train = torch.utils.data.Subset(data_train, indices[:int(n_images*.8)])
+    data_val = torch.utils.data.Subset(data_val, indices[int(n_images*.8):])
+
+    loader_train = DataLoader(data_train, batch_size=args.batch_size, shuffle=True, drop_last=True, pin_memory=False)
+    loader_val = DataLoader(data_val, batch_size=args.batch_size, shuffle=False, drop_last=True, pin_memory=False)
+
+    model = get_model(args, n_classes)
+    
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, betas=(args.momentum, args.alpha),
+                                  weight_decay=args.weight_decay)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
+    # fp16_scaler = torch.cuda.amp.GradScaler() if args.use_fp16 and torch.cuda.is_available() else None
+
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    model.to(device)
+
+    metrics = dict()
+    for epoch in range(1, args.n_epochs +1):
+        print(f'Epoch[{epoch:>3d}/{args.n_epochs:>3d}]:')
+        train_one_epoch(model, optimizer, scheduler, loader_train, device, writer, epoch)
+        if epoch % 1 == 0:
+            metrics = eval_one_epoch(model, loader_val, device, writer, epoch)
+
+    writer.add_hparams(hparam_dict=args.__dict__, metric_dict=metrics)
+    torch.save(model.state_dict(), os.path.join(ckp_dir, f'{args.arch}.pth'))
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_dir', type=str, default='data/v3')
+    parser.add_argument('--ckp_dir', type=str, default='checkpoints')
+    parser.add_argument('--arch', type=str, default='deeplab',
+                        choices=['deeplab', 'lraspp'])
+
+    # Trainingsparameter
+    parser.add_argument('--learning_rate', type=float, default=1e-3)
+    parser.add_argument('--momentum', type=float, default=.9)
+    parser.add_argument('--alpha', type=float, default=.99)
+    parser.add_argument('--weight_decay', type=float, default=.0)
+    parser.add_argument('--step_size', type=int, default=1)
+    parser.add_argument('--gamma', type=int, default=0.9)
+    parser.add_argument('--batch_size', type=int, default=2)
+    parser.add_argument('--n_epochs', type=int, default=10)
+
+    parser.add_argument('--use_fp16', type=bool_flag, default=False)
+    args = parser.parse_args()
+    train_model(args)
+
+
+if __name__ == '__main__':
+    main()
