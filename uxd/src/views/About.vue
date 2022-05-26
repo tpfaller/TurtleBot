@@ -1,6 +1,6 @@
 <template>
     <section class="content">
-        <h1>{{ $t('about.title') }}</h1>
+        <h1 class="title">{{ $t('about.title') }}</h1>
         <div class="col-container col-2">
             <div>
                 <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">

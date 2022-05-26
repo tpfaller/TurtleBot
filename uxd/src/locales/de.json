@@ -2,12 +2,12 @@
     "coinhunter": {
         "title": "Coinhunter",
         "intro": {
-            "title-1": "Das ist die dynamische Überschrift 1",
-            "description-1": "Das ist die dynamische Beschreibung  1",
-            "title-2": "Das ist die dynamische Überschrift 2",
-            "description-2": "Das ist die dynamische Beschreibung 2",
-            "title-3": "Das ist die dynamische Überschrift 3",
-            "description-3": "Das ist die dynamische Beschreibung 3"
+            "title-1": "Über Coinhunter",
+            "description-1": "Coinhunter ist ein Mini-Game basierend auf dem TurtleBot, in dem das Ziel ist so viele Münzen wie möglich einzusammeln. Auf dem Spielfeld befinden sich Hindernisse und Spielfiguren. Der TurtleBot berechnet immer die kürzeste Route zur ausgewählten Spielfigur. Setze die Hindernisse und wähle die Reihenfolge der angefahrenen Figuren aus, um die meisten Münzen zu sammeln!",
+            "title-2": "Hindernisse verteilen",
+            "description-2": "Platziere zunächst die Hindernisse physisch auf dem echten Spielfeld, um die Route des TurtleBots zu verlängern und mehr Münzen einzusammeln!",
+            "title-3": "Reihenfolge festlegen",
+            "description-3": "Tippe die Figuren in deiner gewünschten Reihenfolge auf dem Tablet an, um die Route möglichst weiter zu verlängern!"
         },
         "game": {
             "obstacles": {
@@ -21,26 +21,48 @@
                 "distribution-description": "Bitte warte einen Moment. Die Münzen werden verteilt."
             },
             "figures": {
-                "order-title": "Reihenfolge festlegen",
-                "order-description": "Tippe die Figuren hier im Spielfeld in deiner gewünschten Reihenfolge an und bestätige mit ‘Fertig’!"
+                "setorder-title": "Reihenfolge festlegen",
+                "setorder-description": "Tippe die Figuren hier im Spielfeld in deiner gewünschten Reihenfolge an und bestätige mit ‘Fertig’!",
+                "vieworder-title": "Los geht's, TurtleBot!",
+                "vieworder-description": "Der Bot fährt die Ziele jetzt in deiner Reihenfolge ab."
+            },
+            "finished": {
+                "obstacles-title": "Alle Ziele abgefahren",
+                "obstacles-description": "Der Bot ist fertig!",
+                "leaderboard-title": "Dein Ergebnis",
+                "leaderboard-description": "Du kannst dein Ergebnis auf dem Leaderboard vergleichen"
+            },
+            "results": {
+                "coins": "Münzen",
+                "time": "Zeit"
             }
+        },
+        "actionfigures":{
+            "hulk": "Hulk",
+            "ironman": "Ironman",
+            "captainamerica": "Captain America"
         }
     },
     "home": {
         "home": "Home",
         "title": "Willkommen!",
         "subtitle": "Spielen & Sammeln",
-        "description": "Bestimme die Route des TurtleBots und nimm dabei die meisten Münzen mit, um den ersten Platz zu erhalten!",
-        "start-game": "Los geht's!"
+        "description": "Bestimme die Route des TurtleBots und nimm dabei die meisten Münzen mit, um den ersten Platz zu erhalten!"
     },
     "about": {
-        "title": "Team & Idee"
+        "title": "Über uns"
+    },
+    "leaderboard": {
+        "title": "Leaderboard"
     },
     "intro": {
         "start": "Starten"
     },
-    "game": {
+    "button": {
+        "start": "Los geht's!",
         "done": "Fertig",
-        "next": "Weiter"
+        "next": "Weiter",
+        "result": "Ergebnis anzeigen",
+        "leaderboard": "Leaderboard anzeigen"
     }
 }

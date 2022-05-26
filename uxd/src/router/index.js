@@ -3,6 +3,7 @@ import Home from '../views/Home.vue'
 import About from '../views/About.vue'
 import Intro from '../views/Intro.vue'
 import Game from '../views/Game.vue'
+import Leaderboard from '../views/Leaderboard.vue'
 
 const routes = [
     {
@@ -23,7 +24,13 @@ const routes = [
     {
         path: '/game',
         name: 'Game',
-        component: Game
+        component: Game,
+        props: true
+    },
+    {
+        path: '/leaderboard',
+        name: 'Leaderboard',
+        component: Leaderboard
     }
 ]
 const router = createRouter({
