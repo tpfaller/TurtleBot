@@ -2,10 +2,13 @@
     --text-color: #404040;
     --text-color-primary: #70C6A2;
     --text-color-primary-hover: #8dddbc;
+    --text-color-disabled: #b1b5b3;
 
-    --background-color: #fcfcfc;
+    --bg-color: #fcfcfc;
+    --bg-color-primary: #EFEFEF;
 
     --border-color: #F0F0F0;
+    --border-color-dark: #707070;
 
     --white: #ffffff;
 }
@@ -14,7 +17,8 @@ body {
     font-family: Montserrat, Helvetica, sans-serif;
     margin: 0;
     color: var(--text-color);
-    background-color: var(--background-color);
+    background-color: var(--bg-color);
+    hyphens: auto;
 }
 
 a {
@@ -25,8 +29,8 @@ a {
     color: var(--text-color-primary);
 }
 
-.subtitle{
-    margin: 2rem 0 .5rem 0;
+img{
+    max-height: 60vh;
 }
 
 h1 {
@@ -47,8 +51,8 @@ h2 {
 
 #nav {
     display: flex;
-    padding: 1rem;
-    gap: 1rem;
+    padding: 2rem;
+    gap: 3rem;
 }
 
 #nav .logo {
@@ -90,7 +94,7 @@ section.content {
 }
 
 section.game {
-    padding: 1rem;
+    padding: 2rem;
     flex-direction: row;
     gap: 2rem;
 }
@@ -108,7 +112,7 @@ button {
     padding: 0 3rem;
     border: none;
     color: var(--white);
-    background: var(--text-color-primary);
+    background-color: var(--text-color-primary);
     transition: background-color .3s ease;
     height: 4rem;
     font-family: Montserrat, Helvetica, sans-serif;
@@ -118,8 +122,27 @@ button {
 
 button:not([disabled]):hover {
     border: none;
-    background: var(--text-color-primary-hover);
+    background-color: var(--text-color-primary-hover);
     cursor: pointer;
+}
+
+button.disabled{
+    background-color: var(--text-color-disabled);
+}
+
+button.img-button{
+    padding: 0;
+    background: none;
+    color: var(--text-color);
+}
+
+button.img-button > svg{
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+button.img-button:hover{
+    background: none;
 }
 
 .col-container {
@@ -131,11 +154,10 @@ button:not([disabled]):hover {
     width: calc(50% - 1rem);
 }
 
-.game-col{
+.home-col{
     display: flex;
     gap: 2rem;
     flex-direction: column;
-    align-items: center;
 }
 
 .space-between {
@@ -147,26 +169,34 @@ button:not([disabled]):hover {
 }
 
 #game-canvas {
-    background-color: lightgrey;
-    border: 1px solid grey;
+    background-color: var(--bg-color-primary);
     width: 100%;
+    border-radius: 20px;
 }
 
 #game-interaction {
     flex: 70%;
-
 }
 
 #game-instructions {
     height: 100%;
     flex: 30%;
-    background-color: lightgray;
-    padding: 2rem;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+#game-instructions > .content{
+    padding: 2rem;
+    border-radius: 20px;
+    background-color: var(--bg-color-primary);
+    flex-grow: 1;
 }
 
 #game-instructions button {
     position: relative;
+    width: auto;
 }
 
 #game-instructions button.loading {
@@ -184,8 +214,8 @@ button:not([disabled]):hover {
     width: 30px;
     height: 30px;
     border-radius: 50px;
-    border: 5px solid white;
-    border-top-color: black;
+    border: 5px solid var(--bg-color);
+    border-top-color: var(--text-color);
     animation: loading 1s linear infinite;
 }
 
@@ -201,4 +231,122 @@ button:not([disabled]):hover {
 
 .center-v{
     justify-content: center;
+}
+
+.player-info{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.player-info > .player > div{
+    height: 4rem;
+    aspect-ratio: 1/1;
+    width: auto;
+    object-fit: cover;
+    border-radius: 100%;
+    border: 1px solid var(--border-color-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-color-primary);
+}
+
+.player-info img{
+    width: 80%;
+    height: 80%;
+}
+
+.player-info > *{
+    display: flex;
+    align-items: center;
+    background: var(--bg-color-primary);
+    height: 2rem;
+    gap: 1.5rem;
+    border-radius: 2rem;
+}
+
+.player{
+    padding: 0.5rem 1.5rem 0.5rem 0;
+}
+
+.points{
+    padding: 0.5rem 1.5rem;
+}
+
+.actionfigures-order{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.actionfigures-order > div{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background-color: var(--bg-color);
+    padding: 1rem;
+    border-radius: 20px;
+    border: 1px solid var(--border-color-dark)
+}
+
+.actionfigures-order > div img{
+    height: 3rem;
+    width: 3rem;
+    object-fit: contain;
+}
+
+.actionfigures-order > div.checked .checkbox{
+    background-color: var(--text-color);
+}
+
+.actionfigures-order > div.checked .checkbox svg{
+    color: var(--white);
+}
+
+.actionfigures-order div.img-container{
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.actionfigures-order > div svg{
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.actionfigures-order .checkbox{
+    border: 2px solid var(--text-color);
+    border-radius: 100%;
+}
+
+.actionfigures-order .checkbox svg{
+    color: transparent;
+}
+
+.results{
+    display: flex;
+    gap: 2rem;
+}
+
+.result{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: var(--text-color-primary);
+    border-radius: 10px;
+    flex: 1;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+}
+
+.result > .title{
+    color: white;
+}
+
+.result > .content{
+    font-size: 2rem;
+    font-weight: bold;
 }

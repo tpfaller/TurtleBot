@@ -1,11 +1,11 @@
 <script setup>
-import introturtlebot from "../assets/introturtlebot";
+import coinhunter_intro from "../assets/coinhunter_intro";
 </script>
 
 <template>
     <section class="content intro">
         <carousel :items-to-show="1">
-            <slide v-for="item in introturtlebot" :key="item">
+            <slide v-for="item in coinhunter_intro" :key="item">
                 <div class="carousel__item">
                     <img :src="item.src">
                     <h3 class="title">{{ $t(item.title) }}</h3>
