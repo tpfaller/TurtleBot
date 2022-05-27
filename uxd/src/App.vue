@@ -30,7 +30,8 @@ export default {
     return {
       score: 0,
       playerName: "",
-      playerImageNo: 1
+      playerImageNo: 1,
+      muted: false
     };
   },
   created() {
