@@ -7,7 +7,9 @@ export default {
         scores: Number,
         positionData: Array,
         coinSize: Number,
-        coinCount: Number
+        coinCount: Number,
+        order: Array,
+        step: Number
     },
     computed: {
         boardSizePxX() {
@@ -22,6 +24,7 @@ export default {
             bot: this.positionData["Objekte"]["TurtleBot"],
             bot_image: Image,
             heroes: [this.positionData["Objekte"]["Captain_America"], this.positionData["Objekte"]["Iron_Man"], this.positionData["Objekte"]["Hulk"]],
+            heroes_reached: [false, false, false],
             heroes_names: ["Captain_America", "Iron_Man", "Hulk"],
             heroes_images: Image,
             obstacles: [this.positionData["Objekte"]["Hindernis_1"], this.positionData["Objekte"]["Hindernis_2"], this.positionData["Objekte"]["Hindernis_3"]],
@@ -34,14 +37,37 @@ export default {
     mounted() {
         this.boardContext = this.$refs.board.getContext("2d");
         window.addEventListener("keydown", this.onKeyPress);
+
         this.clear();
         this.reset();
-        this.setupObstacles();
+        //this.setupObstacles();
         this.setupHeroes();
         this.setupBot();
-        this.generateCoins();
-        this.setupCoins();
+        //this.generateCoins();
+        //this.setupCoins();
         this.move();
+
+        //TODO: erst beim richtigen Schritt zulassen
+        let that = this;
+        this.$refs.board.addEventListener('click', function (event) {
+
+            var rect = that.$refs.board.getBoundingClientRect();
+            var x = (event.clientX - rect.left) / (rect.right - rect.left) * that.$refs.board.width;
+            var y = (event.clientY - rect.top) / (rect.bottom - rect.top) * that.$refs.board.height;
+
+            that.heroes.forEach(function (hero, i) {
+                if (x >= hero[0] && x <= hero[0] + hero[2] && y >= hero[1] && y <= hero[1] + hero[3]) {
+                    console.log("clicked on: " + that.heroes_names[i])
+                    if (!that.order.includes(that.heroes_names[i])) {
+                        that.order.push(that.heroes_names[i]);
+                    } else {
+                        //TODO: Reihenfolge ändern
+                    }
+                    that.$emit('clickedFigure', that.order);
+                }
+            }, this);
+
+        }, false);
 
         console.log(this.positionData);
     },
@@ -61,6 +87,15 @@ export default {
         },
         positionData() {
             console.log(this.positionData["Spielfeld"]);
+        },
+        step(currentStep) {
+            if (currentStep == 2) {
+                this.setupObstacles();
+                this.drawObstacles();
+            } else if (currentStep == 3) {
+                this.generateCoins();
+                this.setupCoins();
+            }
         }
     },
     methods: {
@@ -159,6 +194,16 @@ export default {
                 this.boardContext.drawImage(this.heroes_images[i], hero[0], hero[1], hero[2], hero[3]);
             }, this);
         },
+        checkHeroCollision() {
+            this.heroes.forEach(function (hero, i) {
+                if (this.heroes_reached[this.order.indexOf(this.heroes_names[i])]) return;
+                if (this.bot[0] + this.bot[2] >= hero[0] && this.bot[0] <= hero[0] + hero[2] && this.bot[1] + this.bot[3] >= hero[1] && this.bot[1] <= hero[1] + hero[3]) {
+                    this.heroes_reached[this.order.indexOf(this.heroes_names[i])] = true;
+                    console.log("heroes reached " + this.heroes_reached);
+                    this.$emit('updateReachedHeroes', this.heroes_reached);
+                }
+            }, this);
+        },
         setupBot() {
             var image = document.createElement('img');
             image.onload = () => this.drawBot();
@@ -188,6 +233,7 @@ export default {
                 if (this.bot[0] + this.bot[2] >= coin[0] && this.bot[0] <= coin[0] + this.coinSize && this.bot[1] + this.bot[3] >= coin[1] && this.bot[1] <= coin[1] + this.coinSize) {
                     coin[2] = true;
                     this.coins_collected++;
+                    this.$emit('collectedCoin', this.coins_collected);
                     console.log("Collected coins: " + this.coins_collected);
                 }
             }, this);
@@ -269,10 +315,18 @@ export default {
             }
 
             this.clear();
-            this.drawObstacles();
+            if (this.step > 1) {
+                this.drawObstacles();
+            }
+            if (this.step > 2) {
+                this.drawCoins();
+            }
+
             this.drawHeroes();
             this.drawBot();
-            this.drawCoins();
+
+            this.checkHeroCollision();
+
         },
         clear() {
             this.boardContext.clearRect(0, 0, this.boardSizePxX, this.boardSizePxY);

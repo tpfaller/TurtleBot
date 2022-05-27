@@ -1,6 +1,6 @@
 {
-    "turtlebot":{
-        "title" : "TurtleBot",
+    "coinhunter":{
+        "title" : "Coinhunter",
         "intro":{
             "title-1" : "This is dynamic Title 1",
             "description-1" : "This is dynamic Description 1",
@@ -8,17 +8,44 @@
             "description-2" : "This is dynamic Description 2",
             "title-3" : "This is dynamic Title 3",
             "description-3" : "This is dynamic Description 3"
+        },
+        "game": {
+            "obstacles": {
+                "distribution-title": "Place obstacles",
+                "distribution-description": "Place the obstacles physically into the actual real field and confirm with ‘Done’.",
+                "recognition-title": "Identifying obstacles...",
+                "recognition-description": "Please wait a moment. The field is being calculated."
+            },
+            "coins": {
+                "distribution-title": "Distributing coins...",
+                "distribution-description": "Please wait a moment. The field is being calculated."
+            },
+            "figures": {
+                "order-title": "Set the order of figures",
+                "order-description": "Tap on the toy figures in your chosen order on the tablet and confirm with ‘Done’."
+            }
+        },
+        "actionfigures":{
+            "hulk": "Hulk",
+            "ironman": "Ironman",
+            "captainamerica": "Captain America"
         }
     },
     "home":{
         "home" : "Home",
         "title" : "Welcome!",
-        "subtitle" : "Please choose a game."
+        "subtitle" : "Play & collect",
+        "description": "Define the TurtleBot's route and collect the most coins to reach the first place!"
     },
     "about":{
-        "title" : "Team & Idea"
+        "title" : "About us"
     },
     "intro":{
         "start" : "Start"
+    },
+    "button": {
+        "start": "Let's play!",
+        "done": "Done",
+        "next": "Next"
     }
 }

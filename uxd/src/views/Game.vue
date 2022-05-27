@@ -1,20 +1,25 @@
 <script setup>
-import gameturtlebot from "../assets/gameturtlebot";
+import coinhunter_steps from "../assets/coinhunter_steps";
 </script>
 
 <template>
     <section class="content game">
         <div id="game-interaction">
-            <GameCanvas ref="gameCanvas" :cellSize="cellSize" :speed="speed" :isPlaying="isPlaying" :scores="scores"
-                :positionData="positionData" :coinSize="coinSize" :coinCount="coinCount" />
+            <GameCanvas @clickedFigure="updateOrder" @collectedCoin="updateScore"
+                @updateReachedHeroes="updateReachedHeroes" :cellSize="cellSize" :speed="speed" :isPlaying="isPlaying"
+                :score="score" :positionData="positionData" :coinSize="coinSize" :coinCount="coinCount" :order="order"
+                :step="currentStep" />
         </div>
         <div id="game-instructions">
-            <h1 class="title">{{ $t(gameturtlebot[currentStep].title) }}</h1>
-            <p class="description">{{ $t(gameturtlebot[currentStep].description) }}</p>
-            <img :src="gameturtlebot[currentStep].img">
-            <button :class="{ disabled: buttonDisabled, loading: buttonLoading }" :disabled=buttonDisabled
-                @click="nextStep">{{
-                        $t(gameturtlebot[currentStep].action)
+            <div class="content">
+                <h1 class="title">{{ $t(coinhunter_steps[currentStep].title) }}</h1>
+                <p class="description">{{ $t(coinhunter_steps[currentStep].description) }}</p>
+                <component :is="coinhunter_steps[currentStep].component" :order="order" :reachedHeroes="reachedHeroes"
+                    :score="score" :duration="duration"></component>
+            </div>
+            <button v-if="showButton" :class="{ disabled: buttonDisabled, loading: buttonLoading }"
+                :disabled=buttonDisabled @click="nextStep">{{
+                        $t(coinhunter_steps[currentStep].action)
                 }}</button>
         </div>
     </section>
@@ -22,7 +27,10 @@ import gameturtlebot from "../assets/gameturtlebot";
 
 <script>
 import GameCanvas from '../components/GameCanvas/GameCanvas.vue';
-import PosData from '../components/GameCanvas/exampleinput.json'
+import PosData from '../components/GameCanvas/exampleinput.json';
+import OrderSet from '../components/Game/OrderSet.vue'
+import OrderView from '../components/Game/OrderView.vue'
+import Results from '../components/Game/Results.vue'
 
 export default {
     name: "Game",
@@ -34,15 +42,29 @@ export default {
             cellSize: 1,
             speed: 10,
             isPlaying: true,
-            scores: 0,
+            playerName: "Player 2",
+            playerImageNo: 3,
+            score: 0,
             currentStep: 0,
+            showButton: true,
             buttonDisabled: false,
             buttonLoading: false,
             positionData: JSON.parse(JSON.stringify(PosData)),
             coinSize: 50,
             coinCount: 20,
+            current: "order",
+            order: [],
+            reachedHeroes: [false, false, false],
+            startTime: Date,
+            endTime: Date,
+            duration: String,
             ros: this.initRos()
         };
+    },
+    mounted() {
+        this.playerImageNo = Math.floor(Math.random() * 4) + 1;
+        this.$emit('updatePlayerinfo', { playerName: this.playerName, playerImageNo: this.playerImageNo });
+        this.showButton = coinhunter_steps[this.currentStep].button == 1;
     },
     methods: {
         initRos() {
@@ -88,12 +110,52 @@ export default {
             });
             this.$refs.gameCanvas.handleObjectPositions(objects)
         },
+        updateOrder(newOrder) {
+            this.order = newOrder;
+            console.log("parent, order: " + this.order);
+            if (this.order.length == 3) {
+                this.buttonDisabled = false;
+            }
+        },
+        updateReachedHeroes(newReachedHeroes) {
+            console.log("updated" + newReachedHeroes);
+            this.reachedHeroes = newReachedHeroes;
+            if (this.reachedHeroes.every(Boolean)) {
+                this.endTime = new Date();
+                this.calculateDuration();
+                this.nextStep();
+            }
+        },
+        calculateDuration() {
+            var diffTime = (this.endTime - this.startTime);
+            let days = diffTime / (24 * 60 * 60 * 1000);
+            let hours = (days % 1) * 24;
+            let minutes = (hours % 1) * 60;
+            let secs = (minutes % 1) * 60;
+            this.duration = Math.floor(minutes).toString().padStart(2, '0') + ":" + Math.floor(secs).toString().padStart(2, '0');
+        },
+        updateScore(newScore) {
+            this.score = newScore;
+            this.$emit('updateScore', this.score);
+        },
         nextStep() {
+            console.log("current step: " + this.currentStep);
             this.setPositionData();
             if (this.currentStep + 1 == 1) {
                 this.currentStep++;
                 this.detectObstacles();
+            } else if (this.currentStep == 3) {
+                this.currentStep++;
+                this.startTime = new Date();
+                console.log("Starting. Time: " + this.startTime);
+            } else if (this.currentStep == 4) {
+                this.currentStep++;
+            } else if (this.currentStep == 5) {
+                this.currentStep++;
+            } else if (this.currentStep == 6) {
+                this.$router.push({ name: 'Leaderboard' })
             }
+            this.showButton = coinhunter_steps[this.currentStep].button == 1;
         },
         detectObstacles() {
             //TODO: Obstacle Detection anstossen
@@ -116,39 +178,38 @@ export default {
             this.positionData = JSON.parse(JSON.stringify(PosData));
         },
         goals(ros, goalQueue) {
-
             var goalSubscriber = () => {
                 var goalSuccessListener = new ROSLIB.Topic({
                     ros: ros,
                     name: '/goal_success',
                     messageType: 'std_msgs/Bool'
                 });
-
-                goalSuccessListener.subscribe(() => { goalQueue.shift() });
+                goalSuccessListener.subscribe(() => goalQueue.shift());
             }
             goalSubscriber();
 
             var goalPublisher = () => {
-
-                var goalListener = new ROSLIB.Topic({
+                var currentGoalPublisher = new ROSLIB.Topic({
                     ros: ros,
                     name: '/current_goal',
                     messageType: 'std_msgs/String'
                 });
 
-                var goal = function (currentGoal) {
+                var publishGoal = (currentGoal) => {
                     var msg = new ROSLIB.Message({
                         data: currentGoal
                     });
-                    goalListener.publish(msg);
+                    currentGoalPublisher.publish(msg);
                 }
-
-                setInterval(() => {
-                    goal(goalQueue[0]);
-                }, 1000)
+                setInterval(() => publishGoal(goalQueue[0]), 1000);
             }
             goalPublisher();
         }
+    },
+    components: {
+        setOrder: OrderSet,
+        viewOrder: OrderView,
+        results: Results
     }
 };
 </script>
