@@ -92,9 +92,6 @@ export default {
 
             objectListener.subscribe(this.handle_obj_message);
 
-            var goalQueue = ['Captain_America', 'Hulk', 'Iron_Man'];
-            this.goals(ros, goalQueue);
-
             return ros
         },
         handle_obj_message(message) {
@@ -147,6 +144,7 @@ export default {
             } else if (this.currentStep == 3) {
                 this.currentStep++;
                 this.startTime = new Date();
+                this.sendGoals();
                 console.log("Starting. Time: " + this.startTime);
             } else if (this.currentStep == 4) {
                 this.currentStep++;
@@ -177,20 +175,27 @@ export default {
         setPositionData() {
             this.positionData = JSON.parse(JSON.stringify(PosData));
         },
-        goals(ros, goalQueue) {
+        sendGoals() {
+            var goalQueue = (this.order).slice();
+
             var goalSubscriber = () => {
                 var goalSuccessListener = new ROSLIB.Topic({
-                    ros: ros,
+                    ros: this.ros,
                     name: '/goal_success',
                     messageType: 'std_msgs/Bool'
                 });
-                goalSuccessListener.subscribe(() => goalQueue.shift());
+                goalSuccessListener.subscribe(() => {
+                    var newReachedHeroes = (this.reachedHeroes).slice();
+                    newReachedHeroes[this.order.indexOf(goalQueue[0])] = true;
+                    this.updateReachedHeroes(newReachedHeroes);
+                    goalQueue.shift();
+                });
             }
             goalSubscriber();
 
             var goalPublisher = () => {
                 var currentGoalPublisher = new ROSLIB.Topic({
-                    ros: ros,
+                    ros: this.ros,
                     name: '/current_goal',
                     messageType: 'std_msgs/String'
                 });
