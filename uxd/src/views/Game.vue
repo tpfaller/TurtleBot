@@ -32,6 +32,8 @@ import OrderSet from '../components/Game/OrderSet.vue'
 import OrderView from '../components/Game/OrderView.vue'
 import Results from '../components/Game/Results.vue'
 
+var audio = new Audio('/src/assets/audio/coin.mp3');
+
 export default {
     name: "Game",
     components: {
@@ -93,6 +95,8 @@ export default {
         updateScore(newScore) {
             this.score = newScore;
             this.$emit('updateScore', this.score);
+
+            audio.play();
         },
         nextStep() {
             console.log("current step: " + this.currentStep);

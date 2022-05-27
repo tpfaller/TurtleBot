@@ -1,5 +1,6 @@
 <script setup>
 import LanguageSwitcher from '../LanguageSwitcher.vue';
+import VolumeSwitcher from '../VolumeSwitcher.vue';
 </script>
 
 <template>
@@ -19,6 +20,7 @@ import LanguageSwitcher from '../LanguageSwitcher.vue';
                 {{ score }}
             </div>
         </div>
+        <VolumeSwitcher @volumeChanged="changeVolume"/>
         <LanguageSwitcher />
     </div>
 </template>
@@ -28,11 +30,17 @@ export default {
     props: {
         score: Number,
         playerName: String,
-        playerImageNo: Number
+        playerImageNo: Number,
+        muted: Boolean
     },
     data() {
         return {
             playerImage: "src/assets/images/Player/Player_" + this.playerImageNo + ".svg"
+        }
+    },
+    methods:{
+        changeVolume(volume){
+            this.$emit('volumeChanged', volume);
         }
     }
 }
