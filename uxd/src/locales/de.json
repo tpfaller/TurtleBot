@@ -34,10 +34,10 @@
             },
             "results": {
                 "coins": "Münzen",
-                "time": "Zeit"
+                "time": "Dauer"
             }
         },
-        "actionfigures":{
+        "actionfigures": {
             "hulk": "Hulk",
             "ironman": "Ironman",
             "captainamerica": "Captain America"
@@ -54,9 +54,6 @@
     },
     "leaderboard": {
         "title": "Leaderboard"
-    },
-    "intro": {
-        "start": "Starten"
     },
     "button": {
         "start": "Los geht's!",

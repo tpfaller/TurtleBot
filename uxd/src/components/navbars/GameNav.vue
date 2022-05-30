@@ -1,13 +1,14 @@
 <script setup>
-import LanguageSwitcher from '../LanguageSwitcher.vue';
-import VolumeSwitcher from '../VolumeSwitcher.vue';
+import LanguageSwitcher from '../controls/LanguageSwitcher.vue'
+import VolumeSwitcher from '../controls/VolumeSwitcher.vue'
+import Logo from '../../assets/images/Logo.vue'
 </script>
 
 <template>
     <div id="nav">
         <router-link to="/">
             <div class="logo">
-                <img class="logo-img" src="../../assets/images/Logo.svg">
+                <Logo/>
                 <div class="logo-title">{{ $t('coinhunter.title') }}</div>
             </div>
         </router-link>
@@ -20,8 +21,10 @@ import VolumeSwitcher from '../VolumeSwitcher.vue';
                 {{ score }}
             </div>
         </div>
-        <VolumeSwitcher @volumeChanged="changeVolume"/>
-        <LanguageSwitcher />
+        <div class="controls">
+            <VolumeSwitcher />
+            <LanguageSwitcher />
+        </div>
     </div>
 </template>
 
@@ -30,17 +33,11 @@ export default {
     props: {
         score: Number,
         playerName: String,
-        playerImageNo: Number,
-        muted: Boolean
+        playerImageNo: Number
     },
     data() {
         return {
             playerImage: "src/assets/images/Player/Player_" + this.playerImageNo + ".svg"
-        }
-    },
-    methods:{
-        changeVolume(volume){
-            this.$emit('volumeChanged', volume);
         }
     }
 }

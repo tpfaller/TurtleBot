@@ -8,10 +8,12 @@
     --bg-color-primary: #EFEFEF;
 
     --border-color: #F0F0F0;
-    --border-color-dark: #707070;
+    --border-color-dark: #cacaca;
 
     --white: #ffffff;
 }
+
+/* ### GENERAL ### */
 
 body {
     font-family: Montserrat, Helvetica, sans-serif;
@@ -19,6 +21,8 @@ body {
     color: var(--text-color);
     background-color: var(--bg-color);
     hyphens: auto;
+    max-height: 100vh;
+    overflow: hidden;
 }
 
 a {
@@ -49,63 +53,7 @@ h2 {
     flex-direction: column;
 }
 
-#nav {
-    display: flex;
-    padding: 2rem;
-    gap: 3rem;
-}
-
-#nav .logo {
-    display: flex;
-    gap: 1rem;
-    user-select: none;
-}
-
-#nav .logo-img {
-    height: 4rem;
-    width: auto;
-}
-
-#nav .logo-title {
-    align-self: center;
-    font-size: 1.75rem;
-    text-transform: uppercase;
-    font-weight: 100;
-}
-
-#nav a {
-    align-self: center;
-    text-decoration: none;
-}
-
-a>svg {
-    fill: white;
-}
-
-#nav>.locale-changer {
-    margin-left: auto;
-}
-
-section.content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 5rem;
-}
-
-section.game {
-    padding: 2rem;
-    flex-direction: row;
-    gap: 2rem;
-}
-
-section.intro{
-    gap: 2rem;
-}
-
-section.intro button{
-    margin-left: auto;
-}
+/* ### BUTTONS ### */
 
 button {
     font-size: 1rem;
@@ -130,10 +78,44 @@ button.disabled{
     background-color: var(--text-color-disabled);
 }
 
+button.loading {
+    color: transparent;
+}
+
+button.loading:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 50px;
+    border: 5px solid var(--bg-color);
+    border-top-color: var(--text-color);
+    animation: loading 1s linear infinite;
+}
+
+@keyframes loading {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 button.img-button{
     padding: 0;
     background: none;
     color: var(--text-color);
+}
+
+button.img-button:hover{
+    background: none;
 }
 
 button.img-button > svg{
@@ -141,8 +123,64 @@ button.img-button > svg{
     width: 1.5rem;
 }
 
-button.img-button:hover{
-    background: none;
+.volume-changer button.img-button > svg{
+    height: 2rem;
+    width: 2rem;
+}
+
+/* ### NAVBAR ### */
+
+#nav {
+    display: flex;
+    padding: 2rem;
+    gap: 3rem;
+}
+
+#nav .logo {
+    display: flex;
+    gap: 1rem;
+    user-select: none;
+}
+
+#nav .logo-title {
+    align-self: center;
+    font-size: 1.75rem;
+    text-transform: uppercase;
+    font-weight: 100;
+}
+
+#nav a {
+    align-self: center;
+    text-decoration: none;
+}
+
+#nav > .controls {
+    margin-left: auto;
+    display: flex;
+    gap: 1.5rem;
+}
+
+/* ### SECTIONS & LAYOUT ### */
+
+section.content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 5rem;
+}
+
+section.game {
+    padding: 2rem;
+    flex-direction: row;
+    gap: 2rem;
+}
+
+section.intro{
+    gap: 2rem;
+}
+
+section.intro button{
+    margin-left: auto;
 }
 
 .col-container {
@@ -164,9 +202,15 @@ button.img-button:hover{
     justify-content: space-between;
 }
 
-.col-2>* {
+.col-2 > * {
     width: calc(50% - 1rem);
 }
+
+.center-v{
+    justify-content: center;
+}
+
+/* ### GAME - CANVAS ### */
 
 #game-canvas {
     background-color: var(--bg-color-primary);
@@ -199,39 +243,7 @@ button.img-button:hover{
     width: auto;
 }
 
-#game-instructions button.loading {
-    color: transparent;
-}
-
-#game-instructions button.loading:after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin: auto;
-    width: 30px;
-    height: 30px;
-    border-radius: 50px;
-    border: 5px solid var(--bg-color);
-    border-top-color: var(--text-color);
-    animation: loading 1s linear infinite;
-}
-
-@keyframes loading {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-.center-v{
-    justify-content: center;
-}
+/* ### GAME - PLAYERINFO ### */
 
 .player-info{
     display: flex;
@@ -273,6 +285,8 @@ button.img-button:hover{
 .points{
     padding: 0.5rem 1.5rem;
 }
+
+/* ### GAME - ORDER ### */
 
 .actionfigures-order{
     display: flex;
@@ -324,6 +338,8 @@ button.img-button:hover{
 .actionfigures-order .checkbox svg{
     color: transparent;
 }
+
+/* ### GAME - RESULTS ### */
 
 .results{
     display: flex;

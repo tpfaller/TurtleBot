@@ -3,5 +3,3 @@
 </template>
 
 <script src="./GameCanvas.js"></script>
-
-<!--<style scoped src="./GameCanvas.css"></style>-->
