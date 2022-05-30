@@ -59,7 +59,13 @@ export default {
             reachedHeroes: [false, false, false],
             startTime: Date,
             endTime: Date,
-            duration: String
+            duration: String,
+            get muted() {
+                return localStorage.getItem('muted') || "false";
+            },
+            set muted(value) {
+                localStorage.setItem('muted', value);
+            }
         };
     },
     mounted() {
@@ -90,13 +96,15 @@ export default {
             let hours = (days % 1) * 24;
             let minutes = (hours % 1) * 60;
             let secs = (minutes % 1) * 60;
-            this.duration = Math.floor(minutes).toString().padStart(2,'0') + ":" + Math.floor(secs).toString().padStart(2,'0');
+            this.duration = Math.floor(minutes).toString().padStart(2, '0') + ":" + Math.floor(secs).toString().padStart(2, '0');
         },
         updateScore(newScore) {
             this.score = newScore;
             this.$emit('updateScore', this.score);
-
-            audio.play();
+            if (this.muted == 'false') {
+                audio.currentTime = 0;
+                audio.play();
+            }
         },
         nextStep() {
             console.log("current step: " + this.currentStep);

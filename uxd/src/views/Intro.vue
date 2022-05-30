@@ -8,8 +8,10 @@ import coinhunter_intro from "../assets/coinhunter_intro";
             <slide v-for="item in coinhunter_intro" :key="item">
                 <div class="carousel__item">
                     <img :src="item.src">
-                    <h3 class="title">{{ $t(item.title) }}</h3>
-                    <p>{{ $t(item.content) }}</p>
+                    <div>
+                        <h3 class="title">{{ $t(item.title) }}</h3>
+                        <p>{{ $t(item.content) }}</p>
+                    </div>
                 </div>
             </slide>
 
@@ -18,7 +20,7 @@ import coinhunter_intro from "../assets/coinhunter_intro";
             </template>
         </carousel>
         <router-link to="/game" custom v-slot="{ navigate }">
-            <button @click="navigate" @keypress.enter="navigate">{{ $t('intro.start') }}</button>
+            <button @click="navigate" @keypress.enter="navigate">{{ $t('button.start') }}</button>
         </router-link>
     </section>
 </template>
@@ -47,15 +49,21 @@ export default {
 .carousel__item {
   min-height: 200px;
   width: 100%;
-  background-color: var(--white);
-  color:  var(--text-color);
+  color: var(--text-color);
   display: flex;
   flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
 }
 
 .carousel__item > img{
-    height: 50vh;
-    object-fit: cover;
+    height: 30vh;
+    object-fit: contain;
+}
+
+.carousel__item > *{
+    pointer-events: none;
+    user-select: none;
 }
 
 .carousel__prev--in-active,
@@ -69,6 +77,11 @@ export default {
 
 .carousel__viewport{
     border-radius: 2rem;
-    border: 1px solid var(--border-color);
+    background-color: var(--white);
+    box-shadow: 0px 0px 0px 1px var(--border-color);
+}
+
+.carousel__slide{
+    align-items: flex-start;
 }
 </style>
