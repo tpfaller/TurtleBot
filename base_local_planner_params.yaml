@@ -1,3 +1,7 @@
+# Datei liegt in /opt/ros/melodic/share/turtlebot3_navigation/param
+# Algorithmus für globale Pfadplanung festlegen: Dijkstra oder A*
+# unter GlobalPlanner Parameter use_dijkstra auf true oder false setzen (true -> Dijkstra wird verwendet, false -> A* wird verwendet)
+
 #base_global_planner: navfn/NavfnROS
 base_global_planner: global_planner/GlobalPlanner
 #base_global_planner: carrot_planner/CarrotPlanner
