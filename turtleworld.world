@@ -1,3 +1,9 @@
+# Datei in /home/aimotion/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo/worlds/
+# hier wird Welt für Gazebo angelegt -> Simulationsumgebung zum Testen
+# Turtlebot wird in mit Tischen begrenzte Welt gestellt
+# 4 Boxen sind als Hindernisse aufgestellt
+# Die Ziele in der Simulation sind Getränkedosen
+
 <?xml version="1.0" ?>
 <sdf version="1.4">
   <world name="default">
