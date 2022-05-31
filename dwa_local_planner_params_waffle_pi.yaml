@@ -1,3 +1,6 @@
+# Datei liegt in opt/ros/melodic/share/turtlebot3_navigation/param
+# hier kann Toleranzbereich eingestellt werden, in dem ein Ziel als erreicht gilt
+
 DWAPlannerROS:
 
 # Robot Configuration Parameters
@@ -19,7 +22,7 @@ DWAPlannerROS:
   acc_lim_theta: 3.2 
 
 # Goal Tolerance Parametes
-  xy_goal_tolerance: 0.05
+  xy_goal_tolerance: 0.05 # Diesen Wert anpassen
   yaw_goal_tolerance: 0.17
   latch_xy_goal_tolerance: false
 
