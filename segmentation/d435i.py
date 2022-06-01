@@ -5,7 +5,7 @@ import pyrealsense2 as rs
 
 
 class RealsenseCamera:
-    def __init__(self, width: int = 640, height: int = 480, fps: int = 30, file_path: str = None):
+    def __init__(self, width: int = 640, height: int = 480, fps: int = 30):
         # Configure depth and color streams
         print("Loading Intel Realsense Camera")
         self.pipeline = rs.pipeline()
@@ -58,13 +58,10 @@ def main():
     parser.add_argument('--width', type=int, default=1280)
     parser.add_argument('--height', type=int, default=720)
     parser.add_argument('--fps', type=int, default=30)
-    parser.add_argument('--path', type=str, default='data/bagfiles/2022-04-26-12-45-00.bag')
     args = parser.parse_args()
-    rs_cam = RealsenseCamera(args.width, args.height, args.fps, args.path)
+    rs_cam = RealsenseCamera(args.width, args.height, args.fps)
     while True:
         ret, color_image, depth_image, depth_colormap, intrin = rs_cam.get_frame_stream()
-        # depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.10), 2)
-        images = np.hstack((color_image, depth_colormap))
         cv2.namedWindow('Test', cv2.WINDOW_KEEPRATIO)
         cv2.namedWindow('Color Frame', cv2.WINDOW_KEEPRATIO)
         cv2.imshow('Test', depth_colormap)
