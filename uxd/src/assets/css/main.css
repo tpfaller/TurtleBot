@@ -196,6 +196,7 @@ section.intro button{
     display: flex;
     gap: 2rem;
     flex-direction: column;
+    justify-content: center;
 }
 
 .space-between {
@@ -365,4 +366,10 @@ section.intro button{
 .result > .content{
     font-size: 2rem;
     font-weight: bold;
+}
+
+/* ### Overflow ### */
+
+section.game, section.game > #game-instructions > .content{
+    overflow: scroll;
 }
