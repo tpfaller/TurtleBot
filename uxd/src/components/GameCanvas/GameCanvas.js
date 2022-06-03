@@ -205,11 +205,11 @@ export default {
         checkCoinCollision() {
             this.coins.forEach(coin => {
                 if (coin[2] == true) return;
-                if (this.bot[0] + this.bot[2] >= coin[0] && this.bot[0] <= coin[0] + this.coinSize && this.bot[1] + this.bot[3] >= coin[1] && this.bot[1] <= coin[1] + this.coinSize) {
+                if (this.bot[0] + this.bot[2] >= coin[0] && this.bot[0] <= coin[0] + this.coinSize 
+                    && this.bot[1] + this.bot[3] >= coin[1] && this.bot[1] <= coin[1] + this.coinSize) {
                     coin[2] = true;
                     this.coins_collected++;
                     this.$emit('collectedCoin', this.coins_collected);
-                    console.log("Collected coins: " + this.coins_collected);
                 }
             }, this);
         },
