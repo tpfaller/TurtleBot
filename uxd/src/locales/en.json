@@ -60,6 +60,7 @@
         "done": "Done",
         "next": "Next",
         "result": "Show results",
-        "leaderboard": "Show leaderboard"
+        "leaderboard": "Show leaderboard",
+        "restart": "Restart"
     }
 }

@@ -1,6 +1,7 @@
 <script setup>
 import LanguageSwitcher from '../controls/LanguageSwitcher.vue'
 import VolumeSwitcher from '../controls/VolumeSwitcher.vue'
+import HelpModalSwitcher from '../controls/HelpModalSwitcher.vue'
 import Logo from '../../assets/images/Logo.vue'
 </script>
 
@@ -22,6 +23,7 @@ import Logo from '../../assets/images/Logo.vue'
             </div>
         </div>
         <div class="controls">
+            <HelpModalSwitcher />
             <VolumeSwitcher />
             <LanguageSwitcher />
         </div>

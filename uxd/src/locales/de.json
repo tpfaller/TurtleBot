@@ -60,6 +60,7 @@
         "done": "Fertig",
         "next": "Weiter",
         "result": "Ergebnis anzeigen",
-        "leaderboard": "Leaderboard anzeigen"
+        "leaderboard": "Leaderboard anzeigen",
+        "restart": "Neu starten"
     }
 }
