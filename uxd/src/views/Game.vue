@@ -1,5 +1,6 @@
 <script setup>
 import coinhunter_steps from "../assets/coinhunter_steps";
+import LeaderBoard from '../assets/data/leaderboard.json'
 </script>
 
 <template>
@@ -32,7 +33,8 @@ import OrderSet from '../components/Game/OrderSet.vue'
 import OrderView from '../components/Game/OrderView.vue'
 import Results from '../components/Game/Results.vue'
 
-var audio = new Audio('/src/assets/audio/coin.mp3');
+var audio_coin = new Audio('/src/assets/audio/coin.mp3');
+var audio_finish = new Audio('/src/assets/audio/finished.wav');
 
 export default {
     name: "Game",
@@ -66,13 +68,15 @@ export default {
             },
             set muted(value) {
                 localStorage.setItem('muted', value);
-            }
+            },
+            leaderBoardData: JSON.parse(JSON.stringify(LeaderBoard))
         };
     },
     mounted() {
         this.playerImageNo = Math.floor(Math.random() * 4) + 1;
         this.$emit('updatePlayerinfo', { playerName: this.playerName, playerImageNo: this.playerImageNo });
         this.showButton = coinhunter_steps[this.currentStep].button == 1;
+        this.saveLeaderboard();
     },
     methods: {
         initRos() {
@@ -127,8 +131,22 @@ export default {
             this.reachedHeroes = newReachedHeroes;
             if (this.reachedHeroes.every(Boolean)) {
                 this.endTime = new Date();
+                audio_finish.currentTime = 0;
+                audio_finish.play();
                 this.calculateDuration();
+                this.saveLeaderboard();
                 this.nextStep();
+            }
+        },
+        saveLeaderboard() {
+            let newId = this.leaderBoardData[this.leaderBoardData.length-1].id + 1;
+            for (var i = 0; i < this.leaderBoardData.length; i++) {
+                if (this.leaderBoardData[i].coins < 11) {
+                    this.leaderBoardData.splice(i, 0, {id: newId, name: this.playerName, player: 1, time: this.duration, coins: this.score})
+                    console.log("insert index: " + i + ", newid: " + newId);
+                    console.log("insert index: " + JSON.stringify(this.leaderBoardData));
+                    break;
+                }
             }
         },
         calculateDuration() {
@@ -143,8 +161,8 @@ export default {
             this.score = newScore;
             this.$emit('updateScore', this.score);
             if (this.muted == 'false') {
-                audio.currentTime = 0;
-                audio.play();
+                audio_coin.currentTime = 0;
+                audio_coin.play();
             }
         },
         nextStep() {

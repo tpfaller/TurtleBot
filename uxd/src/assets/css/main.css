@@ -6,11 +6,14 @@
 
     --bg-color: #fcfcfc;
     --bg-color-primary: #EFEFEF;
+    --bg-modal: #00000060;
 
     --border-color: #F0F0F0;
     --border-color-dark: #cacaca;
 
     --white: #ffffff;
+
+    --border-radius: 20px;
 }
 
 /* ### GENERAL ### */
@@ -175,6 +178,11 @@ section.game {
     gap: 2rem;
 }
 
+section.leaderboard{
+    padding: 0;
+    gap: 2rem;
+}
+
 section.intro{
     gap: 2rem;
 }
@@ -216,7 +224,7 @@ section.intro button{
 #game-canvas {
     background-color: var(--bg-color-primary);
     width: 100%;
-    border-radius: 20px;
+    border-radius: var(--border-radius);
 }
 
 #game-interaction {
@@ -234,7 +242,7 @@ section.intro button{
 
 #game-instructions > .content{
     padding: 2rem;
-    border-radius: 20px;
+    border-radius: var(--border-radius);
     background-color: var(--bg-color-primary);
     flex-grow: 1;
 }
@@ -301,7 +309,7 @@ section.intro button{
     gap: 1rem;
     background-color: var(--bg-color);
     padding: 1rem;
-    border-radius: 20px;
+    border-radius: var(--border-radius);
     border: 1px solid var(--border-color-dark)
 }
 
@@ -368,8 +376,114 @@ section.intro button{
     font-weight: bold;
 }
 
-/* ### Overflow ### */
+/* ### MODALS ### */
 
+modal {
+    background-color: var(--bg-modal);
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5rem;
+    z-index: 1;
+}
+
+.modal{
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+}
+
+modal .img-button{
+    position: absolute;
+    z-index: 2;
+    top: 3rem;
+    right: 8rem;
+}
+
+/* ### Overflow ### */
+/*
 section.game, section.game > #game-instructions > .content{
     overflow: scroll;
+}*/
+
+/* Leaderboard */
+
+.list{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    background-color: var(--bg-color-primary);
+    padding: 2rem 5rem;
+    flex-grow: 1;
+    align-content: flex-start;
+    overflow-y: scroll;
+    height: 0;
+}
+
+.list > div{
+    display: flex;
+    background-color: var(--white);
+    width: calc(50% - 1rem);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    box-sizing: border-box;
+    gap: 1rem;
+    align-items: center;
+    height: fit-content;
+}
+
+.list .coins{
+    margin-left: auto;
+}
+
+.list img{
+    width: 2rem;
+}
+
+.winner{
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.winner > div{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 1.25rem;
+}
+
+.winner img{
+    width: 4rem;
+}
+
+.winner .rank-1{
+    order: 2;
+}
+
+.winner .rank-1 img{
+    width: 5rem;
+}
+
+.winner .rank-2{
+    order: 1;
+}
+
+.winner .rank-3{
+    order: 3;
+}
+
+.coins{
+    font-weight: 700;
+}
+
+.button-container{
+    padding: 0 2rem 2rem;
+    display: flex;
+    align-self: center;
+    gap: 2rem;
 }
