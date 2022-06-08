@@ -10,7 +10,7 @@ def get_model(args, n_classes: int):
         model.classifier[4] = nn.Conv2d(256, n_classes, 1, stride=1)
         model.aux_classifier[4] = nn.Conv2d(10, n_classes, 1, stride=1)
     elif args.arch == 'lraspp':
-        model = seg_models.lraspp_mobilenet_v3_large()
+        model = seg_models.lraspp_mobilenet_v3_large(pretrained=True)
         model.classifier.low_classifier = nn.Conv2d(40, n_classes, 1, stride=1)
         model.classifier.high_classifier = nn.Conv2d(128, n_classes, 1, stride=1)
     return model
