@@ -36,15 +36,19 @@ def inference(model, image: torch.Tensor) -> torch.Tensor:
     return model(image.unsqueeze_(0))['out']
 
 
-def extract_objects(mask: torch.Tensor, obj_classes):
+def extract_objects(mask: torch.Tensor, obj_classes, args):
     """
     Takes a Segmentation Mask as Input and detects objects in it.
     Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
     :return: obj_label, Bounding Box
     """
+    if args.mode == 'turtlebot':
+        objects_ids = [0,1,2,4]
+    elif args.mode == 'topdown':
+        objects_ids = [0,1,2,4,6] 
     obj_label, bboxes = list(), list()
     for i, obj in enumerate(obj_classes):
-        if i in [0,1,2,4]:
+        if i in objects_ids:
             if torch.max(mask[i]) == 1:
                 contour, _ = cv2.findContours(mask[i].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 # hull = [cv2.convexHull(c) for c in contour]
@@ -71,7 +75,7 @@ def stream_realsense(args):
         heatmap = model(rgb_tensor)['out']
         idx = torch.argmax(heatmap, dim=1, keepdim=True)
         prediction = torch.zeros_like(heatmap).scatter_(1, idx, 1.).squeeze()
-        obj_classes, centers = extract_objects(prediction)
+        obj_classes, centers = extract_objects(prediction, args)
 
         for obj_class, center in zip(obj_classes, centers):
             depth = depth_image[center]
@@ -82,11 +86,15 @@ def stream_realsense(args):
 
 
 def stream_video(args):
-    COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
-    obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacle', 'wall']
+    if args.mode == 'turtlebot':
+        obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
+        COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
+    elif args.mode == 'topdown':
+        obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall', 'turtlebot', 'background']
+        COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46), (255, 0, 0), (0, 0, 0)]
     model = load_pretrained_model(args)
     model.eval()
-    cap = cv2.VideoCapture(r'data/test_camera_color_image_raw_compressed.mp4')
+    cap = cv2.VideoCapture(args.video)
     if cap.isOpened():
         print("Error opening video file")
 
@@ -110,7 +118,7 @@ def stream_video(args):
 
                 # scale = (frame.shape[0]/400, frame.shape[1]/400)
 
-                obj_labels, hulls = extract_objects(preds, obj_classes)
+                obj_labels, hulls = extract_objects(preds, obj_classes, args)
 
                 frame = cv2.resize(frame, (400, 400))
                 for obj, hull in zip(obj_labels, hulls):
@@ -131,8 +139,11 @@ def stream_video(args):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights_dir', type=str, default='checkpoints/lraspp_25_05_2022-21_24/lraspp.pth')
+    parser.add_argument('--weights_dir', type=str, default='checkpoints/topdown/lraspp_30.pth')
+    parser.add_argument('--video', type=str, default='data/topdown-valid-video.mp4')
     parser.add_argument('--arch', type=str, default='lraspp', choices=['deeplab', 'lraspp'])
+    parser.add_argument('--mode', type=str, default='topdown',
+                        choices=['turtlebot', 'topdown'])
     args = parser.parse_args()
     stream_video(args)
 

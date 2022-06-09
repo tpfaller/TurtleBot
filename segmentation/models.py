@@ -17,8 +17,16 @@ def get_model(args, n_classes: int):
 
 
 def load_pretrained_model(args):
-    model = get_model(args, 6)
-    state_dict_ = torch.load(args.weights_dir)
+    if args.mode == 'turtlebot':
+        model = get_model(args, 6)
+    elif args.mode == 'topdown':
+        model = get_model(args, 8)
+
+    if torch.cuda.is_available():
+        state_dict_ = torch.load(args.weights_dir)
+    else:
+        state_dict_ = torch.load(args.weights_dir, map_location=torch.device('cpu')) # CPU Machines only
+        
     model.load_state_dict(state_dict_)
     return model
 
