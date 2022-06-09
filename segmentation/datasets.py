@@ -11,15 +11,21 @@ import torchvision
 
 
 class SegmentationDataset(Dataset):
-	def __init__(self, root: str, transform=None):
+	def __init__(self, root: str, transform=None, mode=None):
 		[os.path.join(root, x) for x in os.listdir(root) if x.endswith('.jpg')]
 		# self.images = sorted([os.path.join(root, x) for x in os.listdir(root) if x.endswith('.jpg')])
 		# self.masks = sorted([os.path.join(root, x) for x in os.listdir(root) if x.endswith('truth.png')])
 		self.masks = sorted([os.path.join(root, x) for x in os.listdir(root) if x.endswith('semantic_colored.png')])
 		self.images = [x.replace('_label_ground-truth_semantic_colored.png', '.jpg') for x in self.masks]
 		self.transform = transform
-		self.classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
-		self.colors = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
+		
+		if mode == 'turtlebot':
+			self.classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
+			self.colors = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
+		elif mode == 'topdown':
+			self.classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall', 'turtlebot', 'background']
+			self.colors = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46), (255, 0, 0), (0, 0, 0)]
+        
 		self.class_values = list(range(len(self.classes)))
 		
 	def __len__(self) -> int:
