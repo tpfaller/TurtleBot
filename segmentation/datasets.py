@@ -22,7 +22,6 @@ class SegmentationDataset(Dataset):
 		elif mode == 'topdown':
 			self.classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall', 'turtlebot', 'background']
 			self.colors = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46), (255, 0, 0), (0, 0, 0)]
-        
 		self.class_values = list(range(len(self.classes)))
 		
 	def __len__(self) -> int:
