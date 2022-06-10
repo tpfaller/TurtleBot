@@ -26,13 +26,9 @@ def load_pretrained_model(args):
         state_dict_ = torch.load(args.weights_dir)
     else:
         state_dict_ = torch.load(args.weights_dir, map_location=torch.device('cpu')) # CPU Machines only
-        
+
     model.load_state_dict(state_dict_)
     return model
-
-
-def inference(model, image: torch.Tensor) -> torch.Tensor:
-    return model(image.unsqueeze_(0))['out'].squeeze_()
 
 
 def main():
@@ -41,10 +37,6 @@ def main():
     parser.add_argument('--arch', type=str, default='lraspp',
                         choices=['deeplab', 'lraspp'])
     args = parser.parse_args()
-    model = load_pretrained_model(args)
-    img = torch.rand((3, 400, 400))
-    y = inference(model, img)
-    print(y.size())
 
 
 if __name__ == '__main__':

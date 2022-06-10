@@ -1,8 +1,5 @@
 import os
 import time
-
-import cv2
-
 from augmentations import *
 import numpy as np
 from PIL import Image
@@ -52,29 +49,7 @@ class SegmentationDataset(Dataset):
 
 
 def main() -> None:
-	aug = CustomCompose([ToTensor(), Resize(800,800), Jitter(), HorizontalFlip()])
-	data = SegmentationDataset('data/v3', transform=aug)
-	image_paths = data.images
-	mask_paths = data.masks
-	to_pil = torchvision.transforms.ToPILImage()
-	loader = DataLoader(data, batch_size=1, shuffle=False)
-	# images, targets = next(iter(loader))
-	# for x, y in zip(images, targets):
-	# 	img = torchvision.utils.draw_segmentation_masks(x.to(torch.uint8), masks=y.to(torch.bool), alpha=0.5)
-	# 	to_pil(img).show()
-	# 	to_pil(x).show()
-	for index, (image, target) in enumerate(loader):
-		cv2.namedWindow('Frame', cv2.WINDOW_KEEPRATIO)
-		cv2.namedWindow('Mask', cv2.WINDOW_KEEPRATIO)
-		print(f'Image {index}: \n',image_paths[index], '\n', mask_paths[index])
-		cv2.imshow('Frame', image.squeeze().permute(1, 2, 0).numpy())
-		mask= torchvision.utils.draw_segmentation_masks(image.squeeze().to(torch.uint8), masks=target.squeeze().to(torch.bool), alpha=0.5)
-		cv2.imshow('Mask', mask.permute(1, 2, 0).numpy())
-		cv2.resizeWindow('Frame', 600, 600)
-		cv2.resizeWindow('Mask', 600, 600)
-		time.sleep(0.8)
-		if cv2.waitKey(25) & 0xFF == ord('q'):
-			cv2.destroyAllWindows()
+	pass
 
 
 if __name__ == '__main__':
