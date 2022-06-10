@@ -13,7 +13,8 @@ from torchvision.utils import draw_segmentation_masks, make_grid
 
 def create_images(images, targets, predictions, writer, epoch) -> None:
     global COLORS
-    images = [inv_normalize(x) for x in images]
+    inv = InvertNormalization()
+    images = [inv(x) for x in images]
     gt = [draw_segmentation_masks(x.to(torch.uint8), y.to(torch.bool), alpha=0.5, colors=COLORS) for x, y in zip(images, targets)]
     preds = [draw_segmentation_masks(x.to(torch.uint8), y.to(torch.bool), alpha=0.5, colors=COLORS) for x, y in zip(images, predictions)]
     grid = make_grid(images+gt+preds, nrow=len(images))
@@ -82,12 +83,8 @@ def train_one_epoch(model, criterion, optimizer, scheduler, loader, fp16_scaler,
         epoch_loss += loss.item()
         output = output.detach().cpu()
         idx = torch.argmax(output, dim=1, keepdim=True)
-
         preds = torch.zeros_like(output).scatter_(1, idx, 1.)
         epoch_iou += IoU(preds, targets.detach().cpu())
-
-        # loss.backward()
-        # optimizer.step()
     epoch_loss /= len(loader)
     epoch_iou /= len(loader)
     print("\n----------\nTrain\n----------")
@@ -126,7 +123,6 @@ def train_model(args) -> None:
         weight = torch.cat([torch.ones((1, 3, width, height)).mul_(20.0), torch.ones((1, 3, width, height))], dim=1).to(device)
     elif args.mode == 'topdown':
         weight = torch.cat([torch.ones((1, 3, width, height)).mul_(10.0), torch.ones((1, 3, width, height)), torch.ones((1, 1, width, height)).mul_(5.0), torch.ones((1, 1, width, height))], dim=1).to(device)
-
 
     criterion = torch.nn.BCEWithLogitsLoss(weight=weight)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, betas=(args.momentum, args.alpha),
@@ -177,7 +173,6 @@ def main() -> None:
         COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
     elif args.mode == "topdown":
         COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46), (255, 0, 0), (0, 0, 0)]
-
     train_model(args)
 
 
