@@ -5,3 +5,5 @@ numpy
 Pillow
 torchvision
 segments-ai
+pyrealsense2
+opencv-python

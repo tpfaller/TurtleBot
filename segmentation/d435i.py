@@ -10,8 +10,8 @@ class RealsenseCamera:
         print("Loading Intel Realsense Camera")
         self.pipeline = rs.pipeline()
         config = rs.config()
-        config.enable_stream(rs.stream.color, width, height, rs.format.bgr8, fps)
-        config.enable_stream(rs.stream.depth, width, height, rs.format.z16, fps)
+        config.enable_stream(rs.stream.color, width=width, height=height, format=rs.format.bgr8, framerate=fps)
+        config.enable_stream(rs.stream.depth, width=width, height=height, format=rs.format.z16, framerate=fps)
 
         # Start streaming
         self.pipeline.start(config)

@@ -46,7 +46,7 @@ class HorizontalFlip(object):
 
 class Jitter(object):
     def __init__(self):
-        self.operation = t.ColorJitter(brightness=.5, contrast=.3, saturation=.1)
+        self.operation = t.ColorJitter(brightness=.7, contrast=.4, hue=.1, saturation=.2)
 
     def __call__(self, image, target):
         image = self.operation(image)
@@ -61,9 +61,26 @@ class Normalize(object):
         image = self.operation(image)
         return image, target
 
+
+class PreProcess(object):
+    def __init__(self):
+        self.width, self.height = 400, 400
+        self.operations = t.Compose([t.ToTensor(), t.Resize((self.width, self.height)),
+                                     t.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+
+    def __call__(self, image):
+        image = self.operations(image)
+        return image.unsqueeze(0)
+
+
+class InvertNormalization(object):
+    def __init__(self):
+        self.invert = t.Normalize(mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+                                  std=[1 / 0.229, 1 / 0.224, 1 / 0.225])
+
+    def __call__(self, image):
+        return self.invert(image)
+
     
 def collate_fn(batch):
     return tuple(zip(*batch))
-
-
-inv_normalize = t.Normalize(mean=[-0.485/0.229, -0.456/0.224, -0.406/0.225], std=[1/0.229, 1/0.224, 1/0.225])

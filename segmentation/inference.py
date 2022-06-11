@@ -1,50 +1,34 @@
 import argparse
 import math
+import time
 import cv2
 import numpy as np
 import torch
 from torchvision import transforms as T
+import torchvision.transforms.functional as tf
 from torchvision.utils import draw_segmentation_masks
 
 import pyrealsense2 as rs
 
 from d435i import RealsenseCamera
 from models import load_pretrained_model
+from augmentations import PreProcess, InvertNormalization
+import utils
 
 
-class PreProcess(object):
-    def __init__(self):
-        self.operations = T.Compose([T.ToTensor(), T.Resize((400, 400)),
-                                     T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-
-    def __call__(self, image):
-        image = self.operations(image)
-        return image.unsqueeze(0)
-
-
-class InvertNormalization(object):
-    def __init__(self):
-        self.invert = T.Normalize(mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
-                                  std=[1 / 0.229, 1 / 0.224, 1 / 0.225])
-
-    def __call__(self, image):
-        return self.invert(image)
-
-
-def inference(model, image: torch.Tensor) -> torch.Tensor:
-    model.eval()
-    return model(image.unsqueeze_(0))['out']
-
-
-def extract_objects(mask: torch.Tensor, obj_classes):
+def extract_objects(mask: torch.Tensor, obj_classes, args):
     """
     Takes a Segmentation Mask as Input and detects objects in it.
     Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
     :return: obj_label, Bounding Box
     """
+    if args.mode == 'turtlebot':
+        objects_ids = [0,1,2,4]
+    elif args.mode == 'topdown':
+        objects_ids = [0,1,2,4,6] 
     obj_label, bboxes = list(), list()
     for i, obj in enumerate(obj_classes):
-        if i in [0,1,2,4]:
+        if i in objects_ids:
             if torch.max(mask[i]) == 1:
                 contour, _ = cv2.findContours(mask[i].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 # hull = [cv2.convexHull(c) for c in contour]
@@ -53,47 +37,93 @@ def extract_objects(mask: torch.Tensor, obj_classes):
     return obj_label, bboxes
 
 
+def extract_figures(mask: torch.Tensor):
+    """
+    Takes a Segmentation Mask as Input and detects objects in it.
+    Explicitly named 'Iron Man', 'Hulk' and 'Captain America'.
+    :return: obj_label, Bounding Box
+    """
+    obj_label, bboxes, centers = list(), list(), list()
+    for i in [0,1,2]:
+        if torch.max(mask[i]) == 1:
+            contour, _ = cv2.findContours(mask[i].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contour = [(c, cv2.contourArea(c)) for c in contour]
+            contour.sort(key=lambda x: x[1], reverse=True)
+            if contour[0][1] > 300:
+                hull = contour[0][0]
+                M = cv2.moments(hull)
+                m10, m00, m01 = M["m10"], M["m00"]+1e-6, M["m01"]
+                centers.append((int(m10 / m00), int(m01 / m00)))
+                obj_label.append(i)
+                bboxes.append(hull)
+    return obj_label, bboxes, centers
+
+
 def calc_angle(intrin, center, depth):
-    x_, y_, z_ = rs.rs2_deproject_pixel_to_point(intrin, center, depth)
-    u = abs(x_)
-    sign_u = 1 if x_ > 0 else -1
+    x, y, z = rs.rs2_deproject_pixel_to_point(intrin, center, depth)
+    u = abs(x)
+    sign_u = 1 if x > 0 else -1
     return sign_u * math.degrees(math.asin(u / depth))
 
 
+def rescale(args, center, preprocess):
+    x = int(center[0] * args.width / preprocess.width)
+    y = int(center[1] * args.height / preprocess.height)
+    return x, y
+
+
 def stream_realsense(args):
-    rs_cam = RealsenseCamera()
+    # Initialise Realsense-Camera
+    rs_cam = RealsenseCamera(args.width, height=args.height)
+    # Initialise Preprocessing and Model
     preprocess = PreProcess()
     model = load_pretrained_model(args)
-    while True:
-        ret, color_image, depth_image, depth_colormap, intrin = rs_cam.get_frame_stream()
+    model.eval()
 
-        rgb_tensor = preprocess(color_image)
+    while True:
+        # Get Frames from Camera
+        ret, rgb_frame, depth_frame, depth_colormap, intrin = rs_cam.get_frame_stream()
+        # Preprocess RGB-Frame
+        rgb_tensor = preprocess(rgb_frame)
+
+        # Make Prediction
         heatmap = model(rgb_tensor)['out']
         idx = torch.argmax(heatmap, dim=1, keepdim=True)
         prediction = torch.zeros_like(heatmap).scatter_(1, idx, 1.).squeeze()
-        obj_classes, centers = extract_objects(prediction)
 
-        for obj_class, center in zip(obj_classes, centers):
-            depth = depth_image[center]
-            calc_angle(intrin, center, depth)
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            break
-    rs_cam.release()
+        # Extract detected Objects from Prediction
+        obj_labels, bboxes, t_centers = extract_figures(prediction)
+
+        # Get Depth and Angle per Object
+        center_l, depth_l, angle_l = list(), list(), list()
+        for obj, boxes, center in zip(obj_labels, bboxes, t_centers):
+            x, y = rescale(args, center, preprocess)
+            depth = depth_frame[y, x]
+            depth_l.append(depth)
+            angle_l.append(calc_angle(intrin, (x, y), depth))
+            center_l.append((x, y))
+
+        # Information for Path-planning
+        info = [*zip(obj_labels, center_l, depth_l, angle_l)]
+    # rs_cam.release()
 
 
 def stream_video(args):
-    COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
-    obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacle', 'wall']
+    if args.mode == 'turtlebot':
+        obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
+        COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
+    elif args.mode == 'topdown':
+        obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall', 'turtlebot', 'background']
+        COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46), (255, 0, 0), (0, 0, 0)]
     model = load_pretrained_model(args)
     model.eval()
-    cap = cv2.VideoCapture(r'data/test_camera_color_image_raw_compressed.mp4')
+    cap = cv2.VideoCapture(args.video)
     if cap.isOpened():
         print("Error opening video file")
 
     preprocess = PreProcess()
     inv_norm = InvertNormalization()
     # pil = T.ToPILImage()
-
     n_frame = 0
 
     while cap.isOpened():
@@ -110,7 +140,7 @@ def stream_video(args):
 
                 # scale = (frame.shape[0]/400, frame.shape[1]/400)
 
-                obj_labels, hulls = extract_objects(preds, obj_classes)
+                obj_labels, hulls = extract_objects(preds, obj_classes, args)
 
                 frame = cv2.resize(frame, (400, 400))
                 for obj, hull in zip(obj_labels, hulls):
@@ -131,8 +161,11 @@ def stream_video(args):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights_dir', type=str, default='checkpoints/lraspp_25_05_2022-21_24/lraspp.pth')
+    parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_30.pth')
+    parser.add_argument('--video', type=str, default='data/topdown-valid-video.mp4')
     parser.add_argument('--arch', type=str, default='lraspp', choices=['deeplab', 'lraspp'])
+    parser.add_argument('--mode', type=str, default='topdown',
+                        choices=['turtlebot', 'topdown'])
     args = parser.parse_args()
     stream_video(args)
 
