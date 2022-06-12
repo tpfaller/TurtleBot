@@ -127,25 +127,25 @@ export default {
         },
         initRos() {
             var ros = new ROSLIB.Ros({
-                url : 'ws://localhost:9090'
+                url: 'ws://localhost:9090'
             });
 
-            ros.on('connection', function() {
+            ros.on('connection', function () {
                 console.log('Connected to websocket server.');
             });
 
-            ros.on('error', function(error) {
+            ros.on('error', function (error) {
                 console.log('Error connecting to websocket server: ', error);
             });
 
-            ros.on('close', function() {
+            ros.on('close', function () {
                 console.log('Connection to websocket server closed.');
             });
 
             var objectListener = new ROSLIB.Topic({
-                ros : ros,
-                name : '/game_objects',
-                messageType : 'topdown_camera/ObjectPoseArray'
+                ros: ros,
+                name: '/game_objects',
+                messageType: 'topdown_camera/ObjectPoseArray'
             });
 
             objectListener.subscribe(this.handle_obj_message);
@@ -165,6 +165,34 @@ export default {
             });
             this.$refs.gameCanvas.handleObjectPositions(objects)
         },
+        updateOrder(newOrder) {
+            this.order = newOrder;
+            console.log("parent, order: " + this.order);
+            if (this.order.length == 3) {
+                this.buttonDisabled = false;
+            }
+        },
+        updateReachedHeroes(newReachedHeroes) {
+            console.log("updated" + newReachedHeroes);
+            this.reachedHeroes = newReachedHeroes;
+            if (this.reachedHeroes.every(Boolean)) {
+                this.endTime = new Date();
+                this.calculateDuration();
+                this.nextStep();
+            }
+        },
+        calculateDuration() {
+            var diffTime = (this.endTime - this.startTime);
+            let days = diffTime / (24 * 60 * 60 * 1000);
+            let hours = (days % 1) * 24;
+            let minutes = (hours % 1) * 60;
+            let secs = (minutes % 1) * 60;
+            this.duration = Math.floor(minutes).toString().padStart(2, '0') + ":" + Math.floor(secs).toString().padStart(2, '0');
+        },
+        updateScore(newScore) {
+            this.score = newScore;
+            this.$emit('updateScore', this.score);
+        },
         nextStep() {
             console.log("current step: " + this.currentStep);
             this.setPositionData();
@@ -174,6 +202,7 @@ export default {
             } else if (this.currentStep == 3) {
                 this.currentStep++;
                 this.startTime = new Date();
+                this.sendGoals();
                 console.log("Starting. Time: " + this.startTime);
             } else if (this.currentStep == 4) {
                 this.currentStep++;
@@ -203,6 +232,41 @@ export default {
         },
         setPositionData() {
             this.positionData = JSON.parse(JSON.stringify(PosData));
+        },
+        sendGoals() {
+            var goalQueue = (this.order).slice();
+
+            var goalSubscriber = () => {
+                var goalSuccessListener = new ROSLIB.Topic({
+                    ros: this.ros,
+                    name: '/goal_success',
+                    messageType: 'std_msgs/Bool'
+                });
+                goalSuccessListener.subscribe(() => {
+                    var newReachedHeroes = (this.reachedHeroes).slice();
+                    newReachedHeroes[this.order.indexOf(goalQueue[0])] = true;
+                    this.updateReachedHeroes(newReachedHeroes);
+                    goalQueue.shift();
+                });
+            }
+            goalSubscriber();
+
+            var goalPublisher = () => {
+                var currentGoalPublisher = new ROSLIB.Topic({
+                    ros: this.ros,
+                    name: '/current_goal',
+                    messageType: 'std_msgs/String'
+                });
+
+                var publishGoal = (currentGoal) => {
+                    var msg = new ROSLIB.Message({
+                        data: currentGoal
+                    });
+                    currentGoalPublisher.publish(msg);
+                }
+                setInterval(() => publishGoal(goalQueue[0]), 1000);
+            }
+            goalPublisher();
         }
     },
     components: {
