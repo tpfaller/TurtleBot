@@ -23,6 +23,19 @@ class Resize(object):
         return self.resize_image(image), self.resize_mask(mask)
 
 
+class RandomCrop(object):
+    def __init__(self, minimum_size: float = .3):
+        self.min = minimum_size
+
+    def __call__(self, image: torch.Tensor, mask: torch.Tensor):
+        c, h, w = image.size()
+        height, width = random.randint(int(h*self.min), h), random.randint(int(w*self.min), w)
+        top, left = random.randint(0, h-height), random.randint(0, w-width)
+        image = tf.crop(image, top, left, height, width)
+        mask = tf.crop(mask, top, left, height, width)
+        return image, mask
+
+
 class ToTensor(object):
     def __init__(self):
         self.operation = t.ToTensor()
@@ -84,3 +97,10 @@ class InvertNormalization(object):
     
 def collate_fn(batch):
     return tuple(zip(*batch))
+
+
+if __name__ == '__main__':
+    x = torch.rand(3, 640, 480)
+    y = torch.rand(3, 640, 480)
+    crop = RandomCrop()
+    print(crop(x, y)[0].size())
