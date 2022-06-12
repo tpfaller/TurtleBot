@@ -6,7 +6,7 @@ import LeaderBoard from '../assets/data/leaderboard.json'
 <template>
     <section class="content game">
         <div id="game-interaction">
-            <GameCanvas @clickedFigure="updateOrder" @collectedCoin="updateScore"
+            <GameCanvas ref="gameCanvas" @clickedFigure="updateOrder" @collectedCoin="updateScore"
                 @updateReachedHeroes="updateReachedHeroes" :cellSize="cellSize" :speed="speed" :isPlaying="isPlaying"
                 :score="score" :positionData="positionData" :coinSize="coinSize" :coinCount="coinCount" :order="order"
                 :step="currentStep" />
@@ -68,7 +68,8 @@ export default {
             set muted(value) {
                 localStorage.setItem('muted', value);
             },
-            leaderBoardData: JSON.parse(JSON.stringify(LeaderBoard))
+            leaderBoardData: JSON.parse(JSON.stringify(LeaderBoard)),
+            ros: this.initRos()
         };
     },
     mounted() {
@@ -123,6 +124,46 @@ export default {
                 audio_coin.currentTime = 0;
                 audio_coin.play();
             }
+        },
+        initRos() {
+            var ros = new ROSLIB.Ros({
+                url : 'ws://localhost:9090'
+            });
+
+            ros.on('connection', function() {
+                console.log('Connected to websocket server.');
+            });
+
+            ros.on('error', function(error) {
+                console.log('Error connecting to websocket server: ', error);
+            });
+
+            ros.on('close', function() {
+                console.log('Connection to websocket server closed.');
+            });
+
+            var objectListener = new ROSLIB.Topic({
+                ros : ros,
+                name : '/game_objects',
+                messageType : 'topdown_camera/ObjectPoseArray'
+            });
+
+            objectListener.subscribe(this.handle_obj_message);
+
+            return ros
+        },
+        handle_obj_message(message) {
+            var objects = {}
+            const width = this.positionData["Spielfeld"][0]
+            const height = this.positionData["Spielfeld"][1]
+            message.objects.forEach(obj => {
+                var position = [
+                    Math.floor(obj.x * width), Math.floor(obj.y * height),
+                    Math.floor(obj.width * width), Math.floor(obj.height * height)
+                ]
+                objects[obj.obj_id] = position
+            });
+            this.$refs.gameCanvas.handleObjectPositions(objects)
         },
         nextStep() {
             console.log("current step: " + this.currentStep);
