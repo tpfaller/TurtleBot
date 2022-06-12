@@ -98,7 +98,8 @@ def train_model(args) -> None:
     ckp_dir = create_dir(args.ckp_dir, f"{args.arch}-{args.mode}")
     writer = SummaryWriter(log_dir=os.path.join(ckp_dir, 'runs'))
     width, height = 400, 400
-    transform_train = CustomCompose([ToTensor(), Resize(width, height), Jitter(), HorizontalFlip(), Normalize()])
+    transform_train = CustomCompose([ToTensor(), RandomCrop(), Resize(width, height), Jitter(),
+                                     HorizontalFlip(), Normalize()])
     transform_val = CustomCompose([ToTensor(), Resize(width, height), Normalize()])
 
     data_train = SegmentationDataset(args.data_dir, transform_train, args.mode)
