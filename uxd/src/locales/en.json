@@ -1,0 +1,66 @@
+{
+    "coinhunter": {
+        "title": "Coinhunter",
+        "intro": {
+            "title-1": "About Coinhunter",
+            "description-1": "Coinhunter is a mini game based on the TurtleBot where the goal is collecting as many coins as possible. There are obstacles and toy figures on the field. The TurtleBot always calculates the shortest route of the chosen toy figure. Place the obstacles and choose the order of the approached toy figures to get the most coins!",
+            "title-2": "Distribute obstacles",
+            "description-2": "Place the obstacles physically in the actual real playing field to lengthen the route of the TurtleBot and get more coins!",
+            "title-3": "Set the order of the figures",
+            "description-3": "Tap on each toy figure in your chosen order on the tablet to further lengthen the route!"
+        },
+        "game": {
+            "obstacles": {
+                "distribution-title": "Place obstacles",
+                "distribution-description": "Place the obstacles physically into the actual real field and confirm with ‘Done’.",
+                "recognition-title": "Identifying obstacles...",
+                "recognition-description": "Please wait a moment. The field is being calculated."
+            },
+            "coins": {
+                "distribution-title": "Distributing coins...",
+                "distribution-description": "Please wait a moment. The field is being calculated."
+            },
+            "figures": {
+                "setorder-title": "Set the order of figures",
+                "setorder-description": "Tap on the toy figures in your chosen order on the tablet and confirm with ‘Done’.",
+                "vieworder-title": "Let's go, TurtleBot!",
+                "vieworder-description": "The bot is driving to all targets in the given order."
+            },
+            "finished": {
+                "obstacles-title": "All targets covered",
+                "obstacles-description": "The bot is done!",
+                "leaderboard-title": "Your result",
+                "leaderboard-description": "You can compare your result on the leaderboard"
+            },
+            "results": {
+                "coins": "Coins",
+                "time": "Duration"
+            }
+        },
+        "actionfigures": {
+            "hulk": "Hulk",
+            "ironman": "Ironman",
+            "captainamerica": "Captain America"
+        }
+    },
+    "home": {
+        "home": "Home",
+        "title": "Welcome!",
+        "subtitle": "Play & collect",
+        "description": "Define the TurtleBot's route and collect the most coins to reach the first place!"
+    },
+    "about": {
+        "title": "About us"
+    },
+    "leaderboard": {
+        "title": "Leaderboard"
+    },
+    "button": {
+        "start": "Let's play!",
+        "done": "Done",
+        "next": "Next",
+        "result": "Show results",
+        "leaderboard": "Show leaderboard",
+        "restart": "Restart"
+    }
+}
