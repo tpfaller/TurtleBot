@@ -2,6 +2,7 @@ import argparse
 import math
 import time
 import cv2
+import json
 import numpy as np
 import torch
 from torchvision import transforms as T
@@ -108,6 +109,45 @@ def stream_realsense(args):
     # rs_cam.release()
 
 
+def get_corners(hulls):
+    ''' input: hulls of objects
+    
+        output: list of all four corners and the midpoint'''
+    positions = []
+    for hull in hulls:
+        x_list = []
+        y_list = []
+        for tup in hull:
+            x_list.append(tup[0][0])
+            y_list.append(tup[0][1])
+        
+        positions.append([  [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(x_list == min(x_list))[0][0]])],\
+                            [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(x_list == max(x_list))[0][0]])],\
+                            [int(x_list[np.where(y_list == min(y_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
+                            [int(x_list[np.where(y_list == max(y_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
+                            [int(max(x_list)-((max(x_list)-min(x_list))//2)), int(max(y_list)-((max(y_list)-min(y_list))//2))]])
+    return positions
+
+def positions_to_json(obj_classes, obj_labels, hulls):
+    ''' output: json with all objects and their positions and midpoints
+
+        syntax dict/json: "object_name": [[corner_1],[corner_2,[corner_3],[corner_4],[mid_point_of_object]'''
+
+    tmp = {}
+    tmp["Spielfeld"] = [400,400]
+    for obj, hull in zip(obj_labels, hulls):
+        figure = obj_classes[obj]
+        corners = get_corners(hull)
+        if len(corners) != 1:
+            for i in range(0, len(corners)):
+                tmp[f"{figure}_{i}"] = corners[i]
+        else:
+            tmp[figure] = corners[0]
+
+    json_tmp = json.dumps(tmp)
+
+    return tmp, json_tmp
+
 def stream_video(args):
     if args.mode == 'turtlebot':
         obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
@@ -143,9 +183,18 @@ def stream_video(args):
                 obj_labels, hulls = extract_objects(preds, obj_classes, args)
 
                 frame = cv2.resize(frame, (400, 400))
+
+                print(positions_to_json(obj_classes, obj_labels, hulls)[0])
+                print(positions_to_json(obj_classes, obj_labels, hulls)[1])
+
                 for obj, hull in zip(obj_labels, hulls):
                     # print(obj_classes[obj], hull)
                     cv2.drawContours(frame, hull, -1, COLORS[obj], 3)
+
+                    ## mitte und eckpunkte als rote Punkte anzeigen lassen (debugging)
+                    for positions in get_corners(hull):
+                        for position in positions:
+                            cv2.circle(frame, tuple(position), 2, (0,0,255), 3)
 
                 cv2.namedWindow('Frame', cv2.WINDOW_KEEPRATIO)
                 cv2.namedWindow('Mask', cv2.WINDOW_KEEPRATIO)
