@@ -176,6 +176,7 @@ section.game {
     padding: 2rem;
     flex-direction: row;
     gap: 2rem;
+    min-height: 0;
 }
 
 section.leaderboard{
@@ -223,6 +224,7 @@ section.intro button{
 
 #game-canvas {
     background-color: var(--bg-color-primary);
+    height: auto;
     width: 100%;
     border-radius: var(--border-radius);
 }
@@ -297,13 +299,13 @@ section.intro button{
 
 /* ### GAME - ORDER ### */
 
-.actionfigures-order{
+.heroes-order{
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-.actionfigures-order > div{
+.heroes-order > div{
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -313,38 +315,38 @@ section.intro button{
     border: 1px solid var(--border-color-dark)
 }
 
-.actionfigures-order > div img{
+.heroes-order > div img{
     height: 3rem;
     width: 3rem;
     object-fit: contain;
 }
 
-.actionfigures-order > div.checked .checkbox{
+.heroes-order > div.checked .checkbox{
     background-color: var(--text-color);
 }
 
-.actionfigures-order > div.checked .checkbox svg{
+.heroes-order > div.checked .checkbox svg{
     color: var(--white);
 }
 
-.actionfigures-order div.img-container{
+.heroes-order div.img-container{
     margin-left: auto;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.actionfigures-order > div svg{
+.heroes-order > div svg{
     width: 1.5rem;
     height: 1.5rem;
 }
 
-.actionfigures-order .checkbox{
+.heroes-order .checkbox{
     border: 2px solid var(--text-color);
     border-radius: 100%;
 }
 
-.actionfigures-order .checkbox svg{
+.heroes-order .checkbox svg{
     color: transparent;
 }
 
@@ -410,7 +412,7 @@ section.game, section.game > #game-instructions > .content{
     overflow: scroll;
 }*/
 
-/* Leaderboard */
+/* ### Leaderboard ### */
 
 .list{
     display: flex;
@@ -486,4 +488,19 @@ section.game, section.game > #game-instructions > .content{
     display: flex;
     align-self: center;
     gap: 2rem;
+}
+
+/* ### Lottiefiles ### */
+
+#confetti{
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+#confetti.invisible{
+    display: none;
 }

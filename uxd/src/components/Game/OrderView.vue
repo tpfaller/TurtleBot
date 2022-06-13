@@ -1,8 +1,8 @@
 <template>
-    <div class="actionfigures-order">
+    <div class="heroes-order">
         <div v-for="(item, index) in order" :class="{ checked: reachedHeroes[index] }">
-            <img :src="list[item].img">
-            {{ $t(list[item].name) }}
+            <img :src="list[item].img.src">
+            {{ $t(list[item].name.string) }}
             <div class="img-container checkbox">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check"
                     viewBox="0 0 16 16">
@@ -15,8 +15,7 @@
 </template>
 
 <script>
-import actionfigures from "../../assets/actionfigures.json";
-import draggable from 'vuedraggable'
+import heroes from "../../assets/heroes.json";
 export default {
     props: {
         order: Array,
@@ -24,7 +23,7 @@ export default {
     },
     data() {
         return {
-            list: JSON.parse(JSON.stringify(actionfigures))
+            list: JSON.parse(JSON.stringify(heroes))
         }
     }
 }

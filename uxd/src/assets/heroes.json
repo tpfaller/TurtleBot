@@ -1,0 +1,35 @@
+{
+    "Hulk": {
+        "name":{
+            "topdowncamera": "hulk",
+            "string": "coinhunter.actionfigures.hulk"
+        },
+        "img": {
+            "src": "/src/assets/images/Hulk.svg",
+            "width": 140,
+            "height": 200
+        }
+    },
+    "Iron_Man": {
+        "name":{
+            "topdowncamera": "iron_man",
+            "string": "coinhunter.actionfigures.ironman"
+        },
+        "img": {
+            "src": "/src/assets/images/Iron_Man.svg",
+            "width": 140,
+            "height": 200
+        }
+    },
+    "Captain_America": {
+        "name":{
+            "topdowncamera": "captain_america_0",
+            "string": "coinhunter.actionfigures.captainamerica"
+        },
+        "img": {
+            "src": "/src/assets/images/Captain_America.svg",
+            "width": 166,
+            "height": 200
+        }
+    }
+}
