@@ -1,10 +1,10 @@
 <template>
-    <draggable class="actionfigures-order" :list="order" group="people" @start="drag = true" @end="drag = false"
-        item-key="id">
+    <draggable class="heroes-order" group="people" @start="drag = true" @end="drag = false"
+        item-key="id" tag="transition-group" v-model="order" v-bind="dragOptions" :component-data="{ tag: 'div', name: 'flip-list', type: 'transition' }">
         <template #item="{ element }">
             <div>
-                <img :src="list[element].img">
-                {{ $t(list[element].name) }}
+                <img :src="list[element].img.src">
+                {{ $t(list[element].name.string) }}
                 <div class="img-container">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-grip-vertical" viewBox="0 0 16 16">
@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import actionfigures from "../../assets/actionfigures.json";
+import heroes from "../../assets/heroes.json";
 import draggable from 'vuedraggable'
 export default {
     props: {
@@ -27,10 +27,25 @@ export default {
     components: {
         draggable
     },
+    watch: {
+        order(newOrder){
+            this.$emit('updateOrder', newOrder);
+        }
+    },
+    computed: {
+        dragOptions() {
+            return {
+                animation: 200,
+                group: "description",
+                disabled: false,
+                ghostClass: "ghost"
+            };
+        }
+    },
     data() {
         return {
             enabled: true,
-            list: JSON.parse(JSON.stringify(actionfigures)),
+            list: JSON.parse(JSON.stringify(heroes)),
             drag: false
         }
     }

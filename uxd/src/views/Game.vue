@@ -1,6 +1,7 @@
 <script setup>
-import coinhunter_steps from "../assets/coinhunter_steps";
+import coinhunter_steps from '../assets/coinhunter_steps.js'
 import LeaderBoard from '../assets/data/leaderboard.json'
+import confetti from '../assets/lottiefiles/confetti.json'
 </script>
 
 <template>
@@ -9,14 +10,14 @@ import LeaderBoard from '../assets/data/leaderboard.json'
             <GameCanvas @clickedFigure="updateOrder" @collectedCoin="updateScore"
                 @updateReachedHeroes="updateReachedHeroes" :cellSize="cellSize" :speed="speed" :isPlaying="isPlaying"
                 :score="score" :positionData="positionData" :coinSize="coinSize" :coinCount="coinCount" :order="order"
-                :step="currentStep" />
+                :currentStep="currentStep" />
         </div>
         <div id="game-instructions">
             <div class="content">
                 <h1 class="title">{{ $t(coinhunter_steps[currentStep].title) }}</h1>
                 <p class="description">{{ $t(coinhunter_steps[currentStep].description) }}</p>
                 <component :is="coinhunter_steps[currentStep].component" :order="order" :reachedHeroes="reachedHeroes"
-                    :score="score" :duration="duration"></component>
+                    :score="score" :duration="duration" @updateOrder="updateOrder"></component>
             </div>
             <button v-if="showButton" :class="{ disabled: buttonDisabled, loading: buttonLoading }"
                 :disabled=buttonDisabled @click="nextStep">{{
@@ -24,16 +25,20 @@ import LeaderBoard from '../assets/data/leaderboard.json'
                 }}</button>
         </div>
     </section>
+    <div id="confetti" :class="visibility">
+        <lottie-animation ref="anim" :loop="false" :animationData="confetti" :autoPlay="false"/>
+    </div>
 </template>
 
 <script>
-import GameCanvas from '../components/GameCanvas/GameCanvas.vue';
-import PosData from '../components/GameCanvas/exampleinput.json';
+import GameCanvas from '../components/GameCanvas/GameCanvas.vue'
+import PosData from '../components/GameCanvas/exampleinput.json'
 import OrderSet from '../components/Game/OrderSet.vue'
 import OrderView from '../components/Game/OrderView.vue'
 import Results from '../components/Game/Results.vue'
 
 var audio_coin = new Audio('/src/assets/audio/coin.mp3');
+var audio_hero = new Audio('/src/assets/audio/hero.mp3');
 var audio_finish = new Audio('/src/assets/audio/finished.wav');
 
 export default {
@@ -68,7 +73,8 @@ export default {
             set muted(value) {
                 localStorage.setItem('muted', value);
             },
-            leaderBoardData: JSON.parse(JSON.stringify(LeaderBoard))
+            leaderBoardData: JSON.parse(JSON.stringify(LeaderBoard)),
+            visibility: "invisible"
         };
     },
     mounted() {
@@ -92,9 +98,14 @@ export default {
                 this.endTime = new Date();
                 audio_finish.currentTime = 0;
                 audio_finish.play();
+                this.visibility = "";
+                this.$refs.anim.play();
                 this.calculateDuration();
                 this.saveLeaderboard();
                 this.nextStep();
+            }else if(this.muted == 'false'){
+                audio_hero.currentTime = 0;
+                audio_hero.play();
             }
         },
         saveLeaderboard() {
