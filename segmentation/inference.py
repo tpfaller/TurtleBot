@@ -26,7 +26,7 @@ def extract_objects(mask: torch.Tensor, obj_classes, args):
     if args.mode == 'turtlebot':
         objects_ids = [0,1,2,4]
     elif args.mode == 'topdown':
-        objects_ids = [0,1,2,4,6] 
+        objects_ids = [0,1,2,3,4,6] 
     obj_label, bboxes = list(), list()
     for i, obj in enumerate(obj_classes):
         if i in objects_ids:
@@ -35,6 +35,7 @@ def extract_objects(mask: torch.Tensor, obj_classes, args):
                 # hull = [cv2.convexHull(c) for c in contour]
                 obj_label.append(i)
                 bboxes.append(contour)
+
     return obj_label, bboxes
 
 
@@ -57,6 +58,7 @@ def extract_figures(mask: torch.Tensor):
                 centers.append((int(m10 / m00), int(m01 / m00)))
                 obj_label.append(i)
                 bboxes.append(hull)
+    
     return obj_label, bboxes, centers
 
 
@@ -109,7 +111,7 @@ def stream_realsense(args):
     # rs_cam.release()
 
 
-def get_corners(hulls):
+def get_corners(hulls, obj):
     ''' input: hulls of objects
     
         output: list of all four corners and the midpoint'''
@@ -120,29 +122,38 @@ def get_corners(hulls):
         for tup in hull:
             x_list.append(tup[0][0])
             y_list.append(tup[0][1])
-        
-        positions.append([  [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(x_list == min(x_list))[0][0]])],\
-                            [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(x_list == max(x_list))[0][0]])],\
-                            [int(x_list[np.where(y_list == min(y_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
-                            [int(x_list[np.where(y_list == max(y_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
-                            [int(max(x_list)-((max(x_list)-min(x_list))//2)), int(max(y_list)-((max(y_list)-min(y_list))//2))]])
+        if obj != 3:
+            positions.append([  [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(x_list == min(x_list))[0][0]])],\
+                                [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(x_list == max(x_list))[0][0]])],\
+                                [int(x_list[np.where(y_list == min(y_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
+                                [int(x_list[np.where(y_list == max(y_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
+                                [int(max(x_list)-((max(x_list)-min(x_list))//2)), int(max(y_list)-((max(y_list)-min(y_list))//2))]])
+        else:
+            positions.append([  [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
+                                [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
+                                [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
+                                [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
+                                [int(max(x_list)-((max(x_list)-min(x_list))//2)), int(max(y_list)-((max(y_list)-min(y_list))//2))]])
     return positions
 
 def positions_to_json(obj_classes, obj_labels, hulls):
     ''' output: json with all objects and their positions and midpoints
 
-        syntax dict/json: "object_name": [[corner_1],[corner_2,[corner_3],[corner_4],[mid_point_of_object]'''
+        syntax dict/json: "object_name": [[corner_1],[corner_2],[corner_3],[corner_4],[mid_point_of_object]'''
 
     tmp = {}
-    tmp["Spielfeld"] = [400,400]
+    tmp["Spielfeld"] = []
     for obj, hull in zip(obj_labels, hulls):
         figure = obj_classes[obj]
-        corners = get_corners(hull)
-        if len(corners) != 1:
-            for i in range(0, len(corners)):
-                tmp[f"{figure}_{i}"] = corners[i]
+        corners = get_corners(hull, obj)
+        if figure == "free_space":
+            tmp["Spielfeld"] = [(corners[0][2][0]-corners[0][1][0]),(corners[0][1][1]-corners[0][0][1])]
         else:
-            tmp[figure] = corners[0]
+            if len(corners) != 1:
+                for i in range(0, len(corners)):
+                    tmp[f"{figure}_{i}"] = corners[i]
+            else:
+                tmp[figure] = corners[0]
 
     json_tmp = json.dumps(tmp)
 
@@ -192,7 +203,7 @@ def stream_video(args):
                     cv2.drawContours(frame, hull, -1, COLORS[obj], 3)
 
                     ## mitte und eckpunkte als rote Punkte anzeigen lassen (debugging)
-                    for positions in get_corners(hull):
+                    for positions in get_corners(hull, obj):
                         for position in positions:
                             cv2.circle(frame, tuple(position), 2, (0,0,255), 3)
 
