@@ -1,0 +1,44 @@
+{
+    "turtlebot": {
+        "title": "TurtleBot",
+        "intro": {
+            "title-1": "Das ist die dynamische Überschrift 1",
+            "description-1": "Das ist die dynamische Beschreibung  1",
+            "title-2": "Das ist die dynamische Überschrift 2",
+            "description-2": "Das ist die dynamische Beschreibung 2",
+            "title-3": "Das ist die dynamische Überschrift 3",
+            "description-3": "Das ist die dynamische Beschreibung 3"
+        },
+        "game": {
+            "obstacles": {
+                "distribution-title": "Hindernisse verteilen",
+                "distribution-description": "Platziere die Hindernisse auf dem Spielfeld und bestätige mit ‘Fertig’.",
+                "recognition-title": "Hindernisse werden erkannt...",
+                "recognition-description": "Bitte warte einen Moment. Das Spielfeld wird berechnet."
+            },
+            "coins": {
+                "distribution-title": "Münzen werden verteilt...",
+                "distribution-description": "Bitte warte einen Moment. Die Münzen werden verteilt."
+            },
+            "figures": {
+                "order-title": "Reihenfolge festlegen",
+                "order-description": "Tippe die Figuren hier im Spielfeld in deiner gewünschten Reihenfolge an und bestätige mit ‘Fertig’!"
+            }
+        }
+    },
+    "home": {
+        "home": "Home",
+        "title": "Willkommen!",
+        "subtitle": "Bitte wähle ein Spiel aus."
+    },
+    "about": {
+        "title": "Team & Idee"
+    },
+    "intro": {
+        "start": "Starten"
+    },
+    "game":{
+        "done": "Fertig",
+        "next": "Weiter"
+    }
+}

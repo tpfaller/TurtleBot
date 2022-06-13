@@ -1,0 +1,19 @@
+<svg id="Ebene_1-2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="249.56" height="249.56" viewBox="0 0 249.56 249.56">
+  <defs>
+    <linearGradient id="linear-gradient" x1="1.696" y1="0.5" x2="1.7" y2="0.5" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#eac226"/>
+      <stop offset="0.22" stop-color="#f9c81f"/>
+      <stop offset="0.41" stop-color="#ffec85"/>
+      <stop offset="0.61" stop-color="#edb530"/>
+      <stop offset="0.81" stop-color="#ffec85"/>
+      <stop offset="1" stop-color="#edb530"/>
+    </linearGradient>
+  </defs>
+  <g id="Gruppe_162" data-name="Gruppe 162">
+    <circle id="Ellipse_56" data-name="Ellipse 56" cx="124.78" cy="124.78" r="124.78" transform="translate(0 0)" fill="#b28a24"/>
+    <circle id="Ellipse_57" data-name="Ellipse 57" cx="107.3" cy="107.3" r="107.3" transform="translate(17.48 17.48)" fill="url(#linear-gradient)"/>
+    <path id="Pfad_278" data-name="Pfad 278" d="M124.78,228.76c-58.56,0-106.14-43.28-107.25-101.58-.01.69-.05-2.27-.05-1.57a107.3,107.3,0,1,0,214.6,0c0-.7-.04,1.56-.05.87-1.11,58.3-48.68,102.28-107.25,102.28Z" fill="#f4db94"/>
+    <path id="Pfad_279" data-name="Pfad 279" d="M124.81,18.21A107.39,107.39,0,0,1,232.05,123.57c.01-.69.06-1.52.06-2.21a107.3,107.3,0,0,0-107.3-107.3c-59.26,0-107.3,47.02-107.3,106.28,0,.7-.07,4.19-.05,4.89C18.57,66.93,66.25,18.22,124.82,18.22Z" fill="#4f3e19"/>
+    <text id="_1" data-name="1" transform="translate(93.05 172.66)" fill="#b28a24" font-size="135.08" font-family="SegoeUI, Segoe UI"><tspan x="0" y="0">1</tspan></text>
+  </g>
+</svg>
