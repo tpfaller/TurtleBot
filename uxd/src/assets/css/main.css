@@ -66,6 +66,7 @@ button {
     background-color: var(--text-color-primary);
     transition: background-color .3s ease;
     height: 4rem;
+    min-height: 4rem;
     font-family: Montserrat, Helvetica, sans-serif;
     border-radius: 2rem;
     width: fit-content;
@@ -224,13 +225,16 @@ section.intro button{
 
 #game-canvas {
     background-color: var(--bg-color-primary);
-    height: auto;
-    width: 100%;
+    height: fit-content;
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
     border-radius: var(--border-radius);
 }
 
 #game-interaction {
     flex: 70%;
+    display: flex;
 }
 
 #game-instructions {
@@ -247,6 +251,8 @@ section.intro button{
     border-radius: var(--border-radius);
     background-color: var(--bg-color-primary);
     flex-grow: 1;
+    height: 0;
+    overflow-y: scroll;
 }
 
 #game-instructions button {
