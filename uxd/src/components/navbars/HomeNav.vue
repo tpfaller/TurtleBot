@@ -1,5 +1,6 @@
 <script setup>
 import LanguageSwitcher from '../controls/LanguageSwitcher.vue'
+import SettingsModalSwitcher from '../controls/SettingsModalSwitcher.vue'
 import Logo from '../../assets/images/Logo.vue'
 </script>
 
@@ -16,6 +17,7 @@ import Logo from '../../assets/images/Logo.vue'
         </router-link>
         <div class="controls">
             <LanguageSwitcher />
+            <SettingsModalSwitcher />
         </div>
     </div>
 </template>

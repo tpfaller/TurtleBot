@@ -11,7 +11,8 @@ export default {
         coinSize: Number,
         coinCount: Number,
         order: Array,
-        currentStep: Number
+        currentStep: Number,
+        move: Number
     },
     computed: {
         boardSizePxX() {
@@ -38,13 +39,12 @@ export default {
             coins_image: Image,
             coins_collected: 0,
             updatingCanvas: null,
-            showCollectedCoins: false
+            showCollectedCoins: false,
+            moving: false
         }
     },
     mounted() {
         //this.heroes = [this.positionData[this.heroes_data["Captain_America"].name.topdowncamera], this.positionData[this.heroes_data["Iron_Man"].name.topdowncamera], this.positionData[this.heroes_data["Hulk"].name.topdowncamera]];
-
-        console.log("currentStep" + this.currentStep);
 
         this.boardContext = this.$refs.board.getContext("2d");
         window.addEventListener("keydown", this.onKeyPress);
@@ -53,40 +53,17 @@ export default {
 
         this.clear();
         this.reset();
-        //this.setupObstacles();
         this.setupHeroes();
         this.setupBot();
-        //this.update();
 
-        //TODO: erst beim richtigen Schritt zulassen
-        let that = this;
-        this.$refs.board.addEventListener('click', function (event) {
-
-            if (that.currentStep != 3) {
-                return;
-            }
-
-            var rect = that.$refs.board.getBoundingClientRect();
-            var x = (event.clientX - rect.left) / (rect.right - rect.left) * that.$refs.board.width;
-            var y = (event.clientY - rect.top) / (rect.bottom - rect.top) * that.$refs.board.height;
-
-            that.heroes.forEach(function (hero, i) {
-                if (x >= hero[0] && x <= hero[0] + hero[2] && y >= hero[1] && y <= hero[1] + hero[3]) {
-                    console.log("clicked on: " + that.heroes_names[i])
-                    if (!that.order.includes(that.heroes_names[i])) {
-                        that.order.push(that.heroes_names[i]);
-                        that.$emit('clickedFigure', that.order);
-                    } else {
-                        let newOrder = that.order.filter(x => x !== that.heroes_names[i]);
-                        newOrder.splice(0, 0, that.heroes_names[i]);
-                        that.$emit('clickedFigure', newOrder);
-                    }
-                }
-            }, this);
-
+        this.$refs.board.addEventListener('touchstart', (event) => {
+            e.preventDefault();
+            this.clickedCanvas(event.touches[0].clientX, event.touches[0].clientY);
         }, false);
 
-        console.log(this.positionData);
+        this.$refs.board.addEventListener('click', (event) => {
+            this.clickedCanvas(event.clientX, event.clientY);
+        }, false);
     },
     created() {
         this.reset();
@@ -130,11 +107,52 @@ export default {
                     }, 350);
                 
             }
+        },
+        move(value){
+            console.log("value" + value);
+            this.moving = true;
+            if(value == null){
+                this.moving = false;
+            }
+            let that = this;
+            if(this.moving){
+                var timer = setInterval(function () {
+                    switch (value) {
+                        case 37: that.bot[0] -= 10; break;
+                        case 38: that.bot[1] -= 10; break;
+                        case 39: that.bot[0] += 10; break;
+                        case 40: that.bot[1] += 10; break;
+                    }
+                    if (!that.moving) clearInterval(timer);
+                }, 50);
+            }
         }
     },
     methods: {
         reset() {
             //TODO
+        },
+        clickedCanvas(clientX, clientY){
+            if (this.currentStep != 3) {
+                return;
+            }
+            var rect = this.$refs.board.getBoundingClientRect();
+            var x = (clientX - rect.left) / (rect.right - rect.left) * this.$refs.board.width;
+            var y = (clientY - rect.top) / (rect.bottom - rect.top) * this.$refs.board.height;
+
+            this.heroes.forEach(function (hero, i) {
+                if (x >= hero[0] && x <= hero[0] + hero[2] && y >= hero[1] && y <= hero[1] + hero[3]) {
+                    console.log("clicked on: " + this.heroes_names[i])
+                    if (!this.order.includes(this.heroes_names[i])) {
+                        this.order.push(this.heroes_names[i]);
+                        this.$emit('clickedFigure', this.order);
+                    } else {
+                        let newOrder = this.order.filter(x => x !== this.heroes_names[i]);
+                        newOrder.splice(0, 0, this.heroes_names[i]);
+                        this.$emit('clickedFigure', newOrder);
+                    }
+                }
+            }, this);
         },
         updateCanvas() {
             this.updatingCanvas = setInterval(this.update, 50);
@@ -255,7 +273,7 @@ export default {
         setupBot() {
             var image = document.createElement('img');
             image.onload = () => this.drawBot();
-            image.src = "../src/assets/images/Bot.svg";
+            image.src = "../src/assets/images/bot_front.svg";
             this.bot_image = image;
         },
         drawBot() {

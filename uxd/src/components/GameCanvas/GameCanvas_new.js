@@ -11,7 +11,8 @@ export default {
         coinSize: Number,
         coinCount: Number,
         order: Array,
-        currentStep: Number
+        currentStep: Number,
+        move: Number
     },
     computed: {
         boardSizePxX() {
@@ -129,6 +130,14 @@ export default {
                         if (count == 0) clearInterval(timer);
                     }, 350);
                 
+            }
+        },
+        move(value){
+            switch (value) {
+                case 37: this.bot[4][0] -= 2; break;
+                case 38: this.bot[4][1] -= 2; break;
+                case 39: this.bot[4][0] += 2; break;
+                case 40: this.bot[4][1] += 2; break;
             }
         }
     },
@@ -263,7 +272,7 @@ export default {
         setupBot() {
             var image = document.createElement('img');
             image.onload = () => this.drawBot();
-            image.src = "../src/assets/images/Bot.svg";
+            image.src = "../src/assets/images/bot_front.svg";
             this.bot_image = image;
         },
         drawBot() {

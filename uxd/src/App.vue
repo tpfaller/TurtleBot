@@ -34,7 +34,7 @@ export default {
     };
   },
   created() {
-    document.documentElement.setAttribute('lang', this.$i18n.locale)
+    document.documentElement.setAttribute('lang', this.$i18n.locale);
   },
   watch: {
     '$i18n.locale': function (newVal, oldVal) {

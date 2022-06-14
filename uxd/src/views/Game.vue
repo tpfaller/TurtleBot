@@ -6,11 +6,17 @@ import confetti from '../assets/lottiefiles/confetti.json'
 
 <template>
     <section class="content game">
+        <div id="onscreen-controls">
+            <button id="left" @touchstart="move = 37" @touchend="move = null">ᐊ</button>
+            <button id="up" @touchstart="move = 38" @touchend="move = null">ᐃ</button>
+            <button id="right" @touchstart="move = 39" @touchend="move = null">ᐅ</button>
+            <button id="down" @touchstart="move = 40" @touchend="move = null">ᐁ</button>
+        </div>
         <div id="game-interaction">
             <GameCanvas @clickedFigure="updateOrder" @collectedCoin="updateScore"
                 @updateReachedHeroes="updateReachedHeroes" :cellSize="cellSize" :speed="speed" :isPlaying="isPlaying"
                 :score="score" :positionData="positionData" :coinSize="coinSize" :coinCount="coinCount" :order="order"
-                :currentStep="currentStep" />
+                :currentStep="currentStep" :move="move" />
         </div>
         <div id="game-instructions">
             <div class="content">
@@ -26,7 +32,7 @@ import confetti from '../assets/lottiefiles/confetti.json'
         </div>
     </section>
     <div id="confetti" :class="visibility">
-        <lottie-animation ref="anim" :loop="false" :animationData="confetti" :autoPlay="false"/>
+        <lottie-animation ref="anim" :loop="false" :animationData="confetti" :autoPlay="false" />
     </div>
 </template>
 
@@ -36,6 +42,8 @@ import PosData from '../components/GameCanvas/exampleinput.json'
 import OrderSet from '../components/Game/OrderSet.vue'
 import OrderView from '../components/Game/OrderView.vue'
 import Results from '../components/Game/Results.vue'
+
+import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
 var audio_coin = new Audio('/src/assets/audio/coin.mp3');
 var audio_hero = new Audio('/src/assets/audio/hero.mp3');
@@ -51,7 +59,7 @@ export default {
             cellSize: 1,
             speed: 10,
             isPlaying: true,
-            playerName: "Player 2",
+            playerName: String,
             playerImageNo: 3,
             score: 0,
             currentStep: 0,
@@ -74,16 +82,27 @@ export default {
                 localStorage.setItem('muted', value);
             },
             leaderBoardData: JSON.parse(JSON.stringify(LeaderBoard)),
-            visibility: "invisible"
+            visibility: "invisible",
+            move: 0,
+            sound: null
         };
     },
     mounted() {
-        this.playerImageNo = Math.floor(Math.random() * 4) + 1;
-        this.$emit('updatePlayerinfo', { playerName: this.playerName, playerImageNo: this.playerImageNo });
+        this.generatePlayerInfo();
         this.showButton = coinhunter_steps[this.currentStep].button == 1;
         this.saveLeaderboard();
+        this.prepareAudio();
     },
     methods: {
+        generatePlayerInfo() {
+            this.playerName = uniqueNamesGenerator({
+                dictionaries: [adjectives, colors, animals],
+                separator: '',
+                style: 'capital'
+            });
+            this.playerImageNo = Math.floor(Math.random() * 4) + 1;
+            this.$emit('updatePlayerinfo', { playerName: this.playerName, playerImageNo: this.playerImageNo });
+        },
         updateOrder(newOrder) {
             this.order = newOrder;
             console.log("parent, order: " + this.order);
@@ -96,23 +115,27 @@ export default {
             this.reachedHeroes = newReachedHeroes;
             if (this.reachedHeroes.every(Boolean)) {
                 this.endTime = new Date();
-                audio_finish.currentTime = 0;
-                audio_finish.play();
+                //audio_finish.currentTime = 0;
+                //audio_finish.play();
+                this.sound.currentTime = 0;
+                this.sound.src="/src/assets/audio/finished.wav";
                 this.visibility = "";
                 this.$refs.anim.play();
                 this.calculateDuration();
                 this.saveLeaderboard();
                 this.nextStep();
-            }else if(this.muted == 'false'){
-                audio_hero.currentTime = 0;
-                audio_hero.play();
+            } else if (this.muted == 'false') {
+                //audio_hero.currentTime = 0;
+                //audio_hero.play();
+                this.sound.currentTime = 0;
+                this.sound.src="/src/assets/audio/hero.mp3";
             }
         },
         saveLeaderboard() {
-            let newId = this.leaderBoardData[this.leaderBoardData.length-1].id + 1;
+            let newId = this.leaderBoardData[this.leaderBoardData.length - 1].id + 1;
             for (var i = 0; i < this.leaderBoardData.length; i++) {
                 if (this.leaderBoardData[i].coins < 11) {
-                    this.leaderBoardData.splice(i, 0, {id: newId, name: this.playerName, player: 1, time: this.duration, coins: this.score})
+                    this.leaderBoardData.splice(i, 0, { id: newId, name: this.playerName, player: 1, time: this.startTime, coins: this.score, duration: this.duration })
                     console.log("insert index: " + i + ", newid: " + newId);
                     console.log("insert index: " + JSON.stringify(this.leaderBoardData));
                     break;
@@ -131,14 +154,17 @@ export default {
             this.score = newScore;
             this.$emit('updateScore', this.score);
             if (this.muted == 'false') {
-                audio_coin.currentTime = 0;
-                audio_coin.play();
+                //audio_coin.currentTime = 0;
+                //audio_coin.play();
+                this.sound.currentTime = 0;
+                this.sound.src = "/src/assets/audio/coin.mp3";
             }
         },
         nextStep() {
             console.log("current step: " + this.currentStep);
             this.setPositionData();
             if (this.currentStep + 1 == 1) {
+                this.sound.src = "data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
                 this.currentStep++;
                 this.detectObstacles();
             } else if (this.currentStep == 3) {
@@ -173,6 +199,10 @@ export default {
         },
         setPositionData() {
             this.positionData = JSON.parse(JSON.stringify(PosData));
+        },
+        prepareAudio() {
+            this.sound = new Audio();
+            this.sound.autoplay = true;
         }
     },
     components: {

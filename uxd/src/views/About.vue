@@ -1,24 +1,38 @@
 <template>
-    <section class="content">
+    <section class="content about">
         <h1 class="title">{{ $t('about.title') }}</h1>
+        <div>
+            <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">
+            <p class="col-2">{{ $t('about.summary') }}</p>
+        </div>
         <div class="col-container col-2">
             <div>
                 <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">
-                <h3>Team</h3>
+                <h3 class="image-title">{{ $t('about.ki.names') }}</h3>
             </div>
             <div>
-                <h2>Idee</h2>
-                <p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut
-                    labore
-                    et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea
-                    rebum.
-                    Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor
-                    sit
-                    amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna
-                    aliquyam
-                    erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd
-                    gubergren, no
-                    sea takimata sanctus est Lorem ipsum dolor sit amet.</p>
+                <h2>{{ $t('about.ki.title') }}</h2>
+                <p>{{ $t('about.ki.content') }}</p>
+            </div>
+        </div>
+        <div class="col-container col-2">
+            <div>
+                <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">
+                <h3 class="image-title">{{ $t('about.inf.names') }}</h3>
+            </div>
+            <div>
+                <h2>{{ $t('about.inf.title') }}</h2>
+                <p>{{ $t('about.inf.content') }}</p>
+            </div>
+        </div>
+        <div class="col-container col-2">
+            <div>
+                <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">
+                <h3 class="image-title">{{ $t('about.uxd.names') }}</h3>
+            </div>
+            <div>
+                <h2>{{ $t('about.uxd.title') }}</h2>
+                <p>{{ $t('about.uxd.content') }}</p>
             </div>
         </div>
     </section>
