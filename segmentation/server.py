@@ -10,6 +10,7 @@ from inference import extract_figures, extract_objects
 
 from models import load_pretrained_model
 import cv2
+import numpy as np
 
 WEIGHTS_DIR = '/home/aimotion/TurtleBot/TurtleBot/weights/%s/lraspp_30.pth'
 
@@ -55,16 +56,25 @@ def handle_client(conn: Connection):
             prediction = torch.zeros_like(heatmap).scatter_(1, idx, 1.).squeeze()
 
             # Extract detected Objects from Prediction
-            obj_labels, bboxes, t_centers = extract_figures(prediction)
-
-            objects = [(args.obj_classes[obj], (pos[0] / preprocess.width, pos[1] / preprocess.height))
-                        for (obj, pos) in zip(obj_labels, t_centers)]
+            if mode == 'turtlebot':
+                obj_labels, bboxes, t_centers = extract_figures(prediction)
+                objects = [(args.obj_classes[obj], (pos[0] / preprocess.width, pos[1] / preprocess.height))
+                            for (obj, pos) in zip(obj_labels, t_centers)]
+            else:
+                obj_labels, hulls = extract_objects(prediction, obj_classes, args)
+                objects = []
+                for obj_id, hull in zip(obj_labels, hulls):
+                    pos, dim, angle = cv2.minAreaRect(hull[0])
+                    obj_data = (obj_classes[obj_id], (pos[0] / preprocess.width, pos[1] / preprocess.height), (dim[0] / preprocess.width, dim[1] / preprocess.height), angle)
+                    print(obj_data)
+                    objects.append(obj_data)
 
             # conn.send(objects)
             # Workaround for python2 comppatibility
             conn._check_closed()
             conn._check_writable()
             conn._send_bytes(ForkingPickler.dumps(objects, protocol=2))
+
     finally:
         conn.close()
 
