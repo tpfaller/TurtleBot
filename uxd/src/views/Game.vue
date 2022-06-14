@@ -158,7 +158,7 @@ export default {
             const height = this.positionData["Spielfeld"][1]
             message.objects.forEach(obj => {
                 var position = [
-                    Math.floor(obj.x * width), Math.floor(obj.y * height),
+                    Math.floor((obj.x - obj.width / 2) * width), Math.floor((obj.y - obj.height / 2) * height),
                     Math.floor(obj.width * width), Math.floor(obj.height * height)
                 ]
                 objects[obj.obj_id] = position
