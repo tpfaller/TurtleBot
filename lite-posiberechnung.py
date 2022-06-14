@@ -1,3 +1,6 @@
+#veraltete Datei
+# neue Version: lite_team.py
+
 import rospy
 import roslaunch
 import subprocess
