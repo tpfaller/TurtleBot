@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import math
 import sys
-from camera_reader import CIBagReader, ImageListener, RealsenseReader
+from camera_reader import CIBagReader, ImageListener, RealsenseReader, RealsenseTopicReader
 from topics import CITopic
 import rospy
 from object_detection.msg import ObjectPosition, ObjectPositionArray
@@ -63,7 +63,7 @@ class TestListener(ImageListener):
 
 # endregion
 
-class ObjectDetection(RealsenseReader):
+class ObjectDetection(RealsenseTopicReader):
 
     def __init__(self, server_address = ('localhost', 6000), object_publisher = None, width=640, height=480, fps=30):
         super(ObjectDetection, self).__init__(width, height, fps, None, None)
@@ -71,19 +71,22 @@ class ObjectDetection(RealsenseReader):
         self.object_publisher = object_publisher
         self.client.send('turtlebot')
 
-    def handle_images(self, color_image, depth_image, color_timestamp, depth_timestamp, depth_colormap, color_intrin):
-        super(ObjectDetection, self).handle_images(color_image, depth_image, color_timestamp, depth_timestamp, depth_colormap, color_intrin)
+    def handle_images(self, color_image, depth_image, color_timestamp, depth_timestamp, color_intrin):
+        super(ObjectDetection, self).handle_images(color_image, depth_image, color_timestamp, depth_timestamp, color_intrin)
         self.client.send(color_image)
         object_list = self.client.recv()
+        print('Detected %d objects' % len(object_list))
         detected_objects = []
         d_height = len(depth_image)
         d_width = 0
         if d_height > 0:
             d_width = len(depth_image[0])
         for obj_id, pos in object_list:
-            x = pos[0] * d_width
-            y = pos[1] * d_height
+            x = int(pos[0] * d_width)
+            y = int(pos[1] * d_height)
             distance = depth_image[y, x]
+            if distance <= 0:
+                continue
             u, _, _ = rs.rs2_deproject_pixel_to_point(color_intrin, (x, y), distance)
             angle = math.asin(u / distance)
             detected_objects.append(ObjectPosition(obj_id, distance, angle))

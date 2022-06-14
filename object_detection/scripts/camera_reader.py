@@ -3,10 +3,12 @@ import functools
 import time
 import numpy as np
 import cv2
+from topics import CITopic, CameraTopic
 import rospy
 import rosbag
 import pyrealsense2 as rs
-from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import CompressedImage, Image, CameraInfo
+from cv_bridge import CvBridge
 
 
 class ImageListener(object):
@@ -59,10 +61,6 @@ class RealsenseReader(object):
         hole_filling = rs.hole_filling_filter()
         filled_depth = hole_filling.process(filtered_depth)
 
-        # Create colormap to show the depth of the Objects
-        colorizer = rs.colorizer()
-        depth_colormap = np.asanyarray(colorizer.colorize(filled_depth).get_data())
-
         depth_image = np.asanyarray(filled_depth.get_data())
         color_image = np.asanyarray(color_frame.get_data())
 
@@ -73,9 +71,65 @@ class RealsenseReader(object):
             self.color_listener.handle_img(color_image, color_timestamp)
         if self.depth_listener is not None:
             self.depth_listener.handle_img(depth_image, depth_timestamp)
-        self.handle_images(color_image, depth_image, color_timestamp, depth_timestamp, depth_colormap, color_intrin)
+        self.handle_images(color_image, depth_image, color_timestamp, depth_timestamp, color_intrin)
 
-    def handle_images(self, color_image, depth_image, color_timestamp, depth_timestamp, depth_colormap, color_intrin):
+    def handle_images(self, color_image, depth_image, color_timestamp, depth_timestamp, color_intrin):
+        pass
+
+class RealsenseTopicReader(object):
+
+    def __init__(self, width = 640, height = 480, fps = 30, color_listener = None, depth_listener = None):
+        self.color_listener = color_listener
+        self.depth_listener = depth_listener
+        self.depth_msg = None
+        self.color_info = None
+        self.depth_info = None
+        self.color_subscriber = None
+        self.depth_subscriber = None
+        self.color_info_subscriber = None
+        # self.depth_info_subscriber = None
+        self.bridge = CvBridge()
+
+    def read(self):
+        self.color_subscriber = rospy.Subscriber(CITopic.color_img.value, CompressedImage, self.handle_color_image)
+        self.depth_subscriber = rospy.Subscriber(CameraTopic.depth_img.value, Image, self.handle_depth_image)
+        self.color_info_subscriber = rospy.Subscriber(CameraTopic.camera_info_color.value, CameraInfo, self.handle_color_info)
+        # self.depth_info_subscriber = rospy.Subscriber(CameraTopic.camera_info_depth.value, CameraInfo, self.handle_depth_info)
+        rospy.spin()
+
+    def handle_color_image(self, color_msg):
+        if self.depth_msg is not None and self.color_info is not None:
+
+            depth_img = self.bridge.imgmsg_to_cv2(self.depth_msg, desired_encoding='passthrough')
+
+            color_np_arr = np.fromstring(color_msg.data, np.uint8)
+            color_img = cv2.imdecode(color_np_arr, cv2.IMREAD_COLOR)
+
+            color_timestamp = color_msg.header.stamp.to_sec()
+            depth_timestamp = self.depth_msg.header.stamp.to_sec()
+            intrinsics = rs.intrinsics()
+            intrinsics.width = self.color_info.width
+            intrinsics.height = self.color_info.height
+            intrinsics.ppx = self.color_info.K[2]
+            intrinsics.ppy = self.color_info.K[5]
+            intrinsics.fx = self.color_info.K[0]
+            intrinsics.fy = self.color_info.K[4]
+            #intrinsics.model = cameraInfo.distortion_model
+            intrinsics.model  = rs.distortion.none     
+            intrinsics.coeffs = [i for i in self.color_info.D]
+
+            self.handle_images(color_img, depth_img, color_timestamp, depth_timestamp, intrinsics)
+
+    def handle_depth_image(self, depth_msg):
+        self.depth_msg = depth_msg
+
+    def handle_color_info(self, camera_info):
+        self.color_info = camera_info
+
+    def handle_depth_info(self, camera_info):
+        self.depth_info = camera_info
+
+    def handle_images(self, color_image, depth_image, color_timestamp, depth_timestamp, color_intrin):
         pass
 
 
