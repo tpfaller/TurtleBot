@@ -221,7 +221,7 @@ def stream_video(args):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_30.pth')
+    parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_v1.pth')
     parser.add_argument('--video', type=str, default='data/topdown-valid-video.mp4')
     parser.add_argument('--arch', type=str, default='lraspp', choices=['deeplab', 'lraspp'])
     parser.add_argument('--mode', type=str, default='topdown',
