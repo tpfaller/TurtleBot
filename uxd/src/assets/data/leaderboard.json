@@ -4,76 +4,87 @@
         "name": "Player 1",
         "player": "1",
         "time": "1654346025",
-        "coins": 22
+        "coins": 22,
+        "duration": "00:12"
     },
     {
         "id": 2,
         "name": "Player 2",
         "player": "1",
         "time": "1654347025",
-        "coins": 20
+        "coins": 20,
+        "duration": "00:12"
     },
     {
         "id": 3,
         "name": "Player 3",
         "player": "1",
         "time": "1654347625",
-        "coins": 18
+        "coins": 18,
+        "duration": "00:12"
     },
     {
         "id": 4,
         "name": "Player 4",
         "player": "1",
         "time": "1654348005",
-        "coins": 16
+        "coins": 16,
+        "duration": "00:12"
     },
     {
         "id": 5,
         "name": "Player 5",
         "player": "1",
         "time": "1654348025",
-        "coins": 14
+        "coins": 14,
+        "duration": "00:12"
     },
     {
         "id": 6,
         "name": "Player 6",
         "player": "1",
         "time": "1654348005",
-        "coins": 12
+        "coins": 12,
+        "duration": "00:12"
     },
     {
         "id": 7,
         "name": "Player 7",
         "player": "1",
         "time": "1654348025",
-        "coins": 10
+        "coins": 10,
+        "duration": "00:12"
     },
     {
         "id": 8,
         "name": "Player 8",
         "player": "1",
         "time": "1654348005",
-        "coins": 8
+        "coins": 8,
+        "duration": "00:12"
     },
     {
         "id": 9,
         "name": "Player 9",
         "player": "1",
         "time": "1654348025",
-        "coins": 6
+        "coins": 6,
+        "duration": "00:12"
     },
     {
         "id": 10,
         "name": "Player 10",
         "player": "1",
         "time": "1654348005",
-        "coins": 4
+        "coins": 4,
+        "duration": "00:12"
     },
     {
         "id": 11,
         "name": "Player 11",
         "player": "1",
         "time": "1654348025",
-        "coins": 2
+        "coins": 2,
+        "duration": "00:12"
     }
 ]
