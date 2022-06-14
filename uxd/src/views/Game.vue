@@ -59,7 +59,7 @@ export default {
             buttonDisabled: false,
             buttonLoading: false,
             positionData: JSON.parse(JSON.stringify(PosData)),
-            coinSize: 50,
+            coinSize: 10,
             coinCount: 20,
             current: "order",
             order: [],
