@@ -14,9 +14,23 @@ import numpy as np
 
 WEIGHTS_DIR = '/home/aimotion/TurtleBot/TurtleBot/weights/%s/lraspp_30.pth'
 
+def get_normalized_bounding_rect(hull, width, height):
+    pos, dim, angle = cv2.minAreaRect(hull)
+    return ((pos[0] / width, pos[1] / height),
+            (dim[0] / width, dim[1] / height),
+            angle)
+
+
+def get_area(rect):
+    dim = rect[1]
+    return dim[0] * dim[1]
+
+
 def handle_client(conn: Connection):
 
     mode = conn.recv()
+
+    max_objects = [1, 1, 1, 0, 0, 0, 1, 0]
 
     if mode == 'turtlebot':
         obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
@@ -63,11 +77,26 @@ def handle_client(conn: Connection):
             else:
                 obj_labels, hulls = extract_objects(prediction, obj_classes, args)
                 objects = []
-                for obj_id, hull in zip(obj_labels, hulls):
-                    pos, dim, angle = cv2.minAreaRect(hull[0])
-                    obj_data = (obj_classes[obj_id], (pos[0] / preprocess.width, pos[1] / preprocess.height), (dim[0] / preprocess.width, dim[1] / preprocess.height), angle)
-                    print(obj_data)
-                    objects.append(obj_data)
+
+                for obj_id, hull_list in zip(obj_labels, hulls):
+                    max_object_count = max_objects[obj_id]
+
+                    bounding_rects = []
+                    for hull in hull_list:
+                        rect = get_normalized_bounding_rect(hull, preprocess.width, preprocess.height)
+                        bounding_rects.append(rect)
+
+                    if max_object_count > 0 and len(bounding_rects) > max_object_count:
+                        bounding_rects.sort(key=get_area, reverse=True)
+
+                    object_count = len(bounding_rects)
+                    if max_object_count > 0:
+                        object_count = min(max_object_count, object_count)
+
+                    for i in range(object_count):
+                        rect = bounding_rects[i]
+                        obj_data = (obj_classes[obj_id], *rect)
+                        objects.append(obj_data)
 
             # conn.send(objects)
             # Workaround for python2 comppatibility
