@@ -1,5 +1,5 @@
 <script setup>
-import SettingsModal from '../modals/SettingsModal.vue'
+import SettingsModal from '../modals/Settingsmodal.vue'
 </script>
 
 <template>
