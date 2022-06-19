@@ -36,7 +36,7 @@ class CameraReader(object):
         self.publisher.publish(ObjectPoseArray(detected_objects))
 
     def read(self):
-        cap = cv2.VideoCapture('/home/aimotion/TurtleBot/topdown-valid-video.mp4')
+        cap = cv2.VideoCapture(0)
         while cap.isOpened():
             ret, frame = cap.read()
             if ret:

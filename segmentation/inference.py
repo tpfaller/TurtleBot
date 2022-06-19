@@ -26,7 +26,7 @@ def extract_objects(mask: torch.Tensor, obj_classes, args):
     if args.mode == 'turtlebot':
         objects_ids = [0,1,2,4]
     elif args.mode == 'topdown':
-        objects_ids = [0,1,2,3,4,6] 
+        objects_ids = [0,1,2,4,5,6] 
     obj_label, bboxes = list(), list()
     for i, obj in enumerate(obj_classes):
         if i in objects_ids:
