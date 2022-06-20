@@ -3,7 +3,7 @@ from argparse import Namespace
 from multiprocessing.connection import Listener, Connection
 from multiprocessing.reduction import ForkingPickler
 import threading
-from typing import Tuple
+from typing import Dict, List, Optional, Tuple
 
 import torch
 from augmentations import PreProcess
@@ -17,15 +17,59 @@ import numpy as np
 
 WEIGHTS_DIR = str(Path(__file__).parent.parent.joinpath('weights/%s/lraspp_%s.pth').absolute())
 
+
+
 @dataclass
 class ObjectPosition:
-    obj_id: str
+    obj_type: 'ObjectType'
     pos: Tuple[float, float]
     dim: Tuple[float, float]
     angle: float
 
-    def as_tuple(self):
-        return (self.obj_id, self.pos, self.dim, self.angle)
+    def get_area(self) -> float:
+        return self.dim[0] * self.dim[1]
+
+    def has_min_area(self) -> bool:
+        return self.obj_type.min_area is None or self.get_area() >= self.obj_type.min_area
+
+    def as_tuple(self, field_x: float, field_y: float, field_width: float, field_height: float) -> Tuple[str, Tuple[float, float], Tuple[float, float], float]:
+        if self.obj_type.fixed_dim is not None:
+            self.dim = self.obj_type.fixed_dim
+            self.angle = 0
+        self.pos = ((self.pos[0] - field_x) / field_width,
+                    (self.pos[1] - field_y) / field_height)
+        return (self.obj_type.obj_id, self.pos, self.dim, self.angle)
+
+
+@dataclass
+class ObjectType:
+    obj_id: str
+    max_objects: Optional[int] = None
+    fixed_dim: Optional[Tuple[float, float]] = None
+    min_area: Optional[float] = None
+    priority: int = 0
+
+    def filter_positions(self, positions: List[ObjectPosition], previous_positions: List[ObjectPosition]) -> List[ObjectPosition]:
+        if self.max_objects is not None and self.max_objects < len(positions):
+            sort_key = ObjectPosition.get_area
+            sorted_pos = sorted(positions, key=sort_key, reverse=True)
+            return sorted_pos[:self.max_objects]
+        else:
+            return list(positions)
+
+
+OBJ_TYPES = [
+    ObjectType('iron_man', 1, (0.07, 0.07)),
+    ObjectType('captain_america', 1, (0.07, 0.07)),
+    ObjectType('hulk', 1, (0.07, 0.07)),
+    ObjectType('free_space'),
+    ObjectType('obstacles', min_area=0.005),
+    ObjectType('wall'),
+    ObjectType('turtlebot', 1, (0.1, 0.1)),
+    ObjectType('background')
+]
+
+OBJ_CLASSES = [obj_type.obj_id for obj_type in OBJ_TYPES]
 
 def normalize(pos: Tuple[int, int], preprocess: PreProcess) -> Tuple[float, float]:
     return (pos[0] / preprocess.width, pos[1] / preprocess.height)
@@ -47,24 +91,16 @@ def get_normalized_rotated_rect(hull, preprocess: PreProcess):
     return (normalize(pos, preprocess), normalize(dim, preprocess), angle)
 
 
-def get_area(rect):
-    dim = rect[1]
-    return dim[0] * dim[1]
-
-
 def handle_client(conn: Connection):
 
     mode = conn.recv()
 
-    max_object_counts = [1, 1, 1, None, None, None, 1, None]
-    fixed_dimensions = [(0.07, 0.07), (0.07, 0.07), (0.07, 0.07), None, None, None, (0.1, 0.1), None]
-    min_areas = [None, None, None, None, 0.005, None, None, None]
+    
+    obj_priority = [obj_id for obj_id, _ in sorted(enumerate(OBJ_TYPES), key=lambda entry: entry[1].priority, reverse=True)]
 
     if mode == 'turtlebot':
-        obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
         weight_version = 'v2'
     elif mode == 'topdown':
-        obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall', 'turtlebot', 'background']
         weight_version = 'v1'
     else:
         print('Unknown mode: %s' % str(mode))
@@ -76,7 +112,7 @@ def handle_client(conn: Connection):
         mode=mode,
         weights_dir=WEIGHTS_DIR % (mode, weight_version),
         arch='lraspp',
-        obj_classes=obj_classes
+        obj_classes=OBJ_CLASSES
     )
 
     model = load_pretrained_model(args)
@@ -105,13 +141,15 @@ def handle_client(conn: Connection):
                 objects = [(args.obj_classes[obj], normalize(pos, preprocess))
                             for (obj, pos) in zip(obj_labels, t_centers)]
             else:
-                obj_labels, hulls = extract_objects(prediction, obj_classes, args)
+                obj_labels, hulls = extract_objects(prediction, OBJ_CLASSES, args)
                 objects = []
 
                 field_x = 0
                 field_y = 0
                 field_width = 1
                 field_height = 1
+                
+                possible_positions: Dict[int, List[ObjectPosition]] = {}
 
                 for obj_id, hull_list in zip(obj_labels, hulls):
 
@@ -136,36 +174,32 @@ def handle_client(conn: Connection):
                         field_height = borders[3] - borders[1]
                     else:
                         # Handle game objects
-                        max_object_count = max_object_counts[obj_id]
-                        fixed_dim = fixed_dimensions[obj_id]
-                        min_area = min_areas[obj_id]
+                        obj_type = OBJ_TYPES[obj_id]
 
-                        bounding_rects = []
+                        positions = []
                         for hull in hull_list:
                             rect = get_normalized_rotated_rect(hull, preprocess)
-                            if min_area is not None and get_area(rect) < min_area:
+                            pos = ObjectPosition(obj_type, *rect)
+                            if not pos.has_min_area():
                                 continue
-                            bounding_rects.append(rect)
+                            positions.append(pos)
 
-                        object_count = len(bounding_rects)
+                        if len(positions) > 0:
+                            possible_positions[obj_id] = positions
 
-                        if max_object_count is not None and object_count > max_object_count:
-                            bounding_rects.sort(key=get_area, reverse=True)
-                            object_count = max_object_count
+                for obj_id in obj_priority:
 
-                        for i in range(object_count):
-                            pos, dim, angle = bounding_rects[i]
-                            if fixed_dim is not None:
-                                dim = fixed_dim
-                                angle = 0
-                            obj_data = ObjectPosition(obj_classes[obj_id], pos, dim, angle)
-                            objects.append(obj_data)
+                    positions = possible_positions.get(obj_id)
+                    if positions is None:
+                        continue
 
-                for object in objects:
-                    object.pos = ((object.pos[0] - field_x) / field_width,
-                                  (object.pos[1] - field_y) / field_height)
+                    obj_type = OBJ_TYPES[obj_id]
+                    filtered_objects = obj_type.filter_positions(positions, objects)
 
-                objects = [obj.as_tuple() for obj in objects]
+                    for obj in filtered_objects:
+                        objects.append(obj)
+                
+                objects = [obj.as_tuple(field_x, field_y, field_width, field_height) for obj in objects]
 
             # conn.send(objects)
             # Workaround for python2 compatibility
