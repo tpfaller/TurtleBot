@@ -2,6 +2,7 @@ import argparse
 import math
 import time
 import cv2
+import json
 import numpy as np
 import torch
 from torchvision import transforms as T
@@ -25,7 +26,7 @@ def extract_objects(mask: torch.Tensor, obj_classes, args):
     if args.mode == 'turtlebot':
         objects_ids = [0,1,2,4]
     elif args.mode == 'topdown':
-        objects_ids = [0,1,2,4,6] 
+        objects_ids = [0,1,2,4,5,6] 
     obj_label, bboxes = list(), list()
     for i, obj in enumerate(obj_classes):
         if i in objects_ids:
@@ -34,6 +35,7 @@ def extract_objects(mask: torch.Tensor, obj_classes, args):
                 # hull = [cv2.convexHull(c) for c in contour]
                 obj_label.append(i)
                 bboxes.append(contour)
+
     return obj_label, bboxes
 
 
@@ -56,6 +58,7 @@ def extract_figures(mask: torch.Tensor):
                 centers.append((int(m10 / m00), int(m01 / m00)))
                 obj_label.append(i)
                 bboxes.append(hull)
+    
     return obj_label, bboxes, centers
 
 
@@ -108,6 +111,54 @@ def stream_realsense(args):
     # rs_cam.release()
 
 
+def get_corners(hulls, obj):
+    ''' input: hulls of objects
+    
+        output: list of all four corners and the midpoint'''
+    positions = []
+    for hull in hulls:
+        x_list = []
+        y_list = []
+        for tup in hull:
+            x_list.append(tup[0][0])
+            y_list.append(tup[0][1])
+        if obj != 3:
+            positions.append([  [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(x_list == min(x_list))[0][0]])],\
+                                [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(x_list == max(x_list))[0][0]])],\
+                                [int(x_list[np.where(y_list == min(y_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
+                                [int(x_list[np.where(y_list == max(y_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
+                                [int(max(x_list)-((max(x_list)-min(x_list))//2)), int(max(y_list)-((max(y_list)-min(y_list))//2))]])
+        else:
+            positions.append([  [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
+                                [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
+                                [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
+                                [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
+                                [int(max(x_list)-((max(x_list)-min(x_list))//2)), int(max(y_list)-((max(y_list)-min(y_list))//2))]])
+    return positions
+
+def positions_to_json(obj_classes, obj_labels, hulls):
+    ''' output: json with all objects and their positions and midpoints
+
+        syntax dict/json: "object_name": [[corner_1],[corner_2],[corner_3],[corner_4],[mid_point_of_object]'''
+
+    tmp = {}
+    tmp["Spielfeld"] = []
+    for obj, hull in zip(obj_labels, hulls):
+        figure = obj_classes[obj]
+        corners = get_corners(hull, obj)
+        if figure == "free_space":
+            tmp["Spielfeld"] = [(corners[0][2][0]-corners[0][1][0]),(corners[0][1][1]-corners[0][0][1])]
+        else:
+            if len(corners) != 1:
+                for i in range(0, len(corners)):
+                    tmp[f"{figure}_{i}"] = corners[i]
+            else:
+                tmp[figure] = corners[0]
+
+    json_tmp = json.dumps(tmp)
+
+    return tmp, json_tmp
+
 def stream_video(args):
     if args.mode == 'turtlebot':
         obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
@@ -143,9 +194,18 @@ def stream_video(args):
                 obj_labels, hulls = extract_objects(preds, obj_classes, args)
 
                 frame = cv2.resize(frame, (400, 400))
+
+                print(positions_to_json(obj_classes, obj_labels, hulls)[0])
+                print(positions_to_json(obj_classes, obj_labels, hulls)[1])
+
                 for obj, hull in zip(obj_labels, hulls):
                     # print(obj_classes[obj], hull)
                     cv2.drawContours(frame, hull, -1, COLORS[obj], 3)
+
+                    ## mitte und eckpunkte als rote Punkte anzeigen lassen (debugging)
+                    for positions in get_corners(hull, obj):
+                        for position in positions:
+                            cv2.circle(frame, tuple(position), 2, (0,0,255), 3)
 
                 cv2.namedWindow('Frame', cv2.WINDOW_KEEPRATIO)
                 cv2.namedWindow('Mask', cv2.WINDOW_KEEPRATIO)
@@ -161,7 +221,7 @@ def stream_video(args):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_30.pth')
+    parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_v1.pth')
     parser.add_argument('--video', type=str, default='data/topdown-valid-video.mp4')
     parser.add_argument('--arch', type=str, default='lraspp', choices=['deeplab', 'lraspp'])
     parser.add_argument('--mode', type=str, default='topdown',

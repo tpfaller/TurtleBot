@@ -19,9 +19,11 @@ class CameraReader(object):
         object_list = self.client.recv()
         obstacle_id = 0
         detected_objects = []
+
         for obj_id, pos, dim, rot in object_list:
-            x = pos[0] - self.obj_width / 2
-            y = pos[1] - self.obj_height / 2
+            pos = (pos[0] - self.obj_width / 2,
+                   pos[1] - self.obj_height / 2)
+
             if obj_id == 'obstacles':
                 obj_id = 'obstacle_%d' % obstacle_id
                 obstacle_id += 1
@@ -31,12 +33,15 @@ class CameraReader(object):
                 obj_id = 'Iron_Man'
             if obj_id == 'captain_america':
                 obj_id = 'Captain_America'
-            detected_objects.append(ObjectPose(obj_id, x, y, dim[0], dim[1], rot))
+            if rot > 45:
+                rot -= 90
+                dim = (dim[1], dim[0])
+            detected_objects.append(ObjectPose(obj_id, pos[0], pos[1], dim[0], dim[1], rot))
 
         self.publisher.publish(ObjectPoseArray(detected_objects))
 
     def read(self):
-        cap = cv2.VideoCapture()
+        cap = cv2.VideoCapture(1)
         while cap.isOpened():
             ret, frame = cap.read()
             if ret:
