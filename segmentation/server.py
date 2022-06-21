@@ -12,7 +12,7 @@ from inference import extract_figures, extract_objects
 from models import load_pretrained_model
 import cv2
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np
 
 WEIGHTS_DIR = str(Path(__file__).parent.parent.joinpath('weights/%s/lraspp_%s.pth').absolute())
@@ -25,9 +25,11 @@ class ObjectPosition:
     pos: Tuple[float, float]
     dim: Tuple[float, float]
     angle: float
+    contour_area: float
 
     def get_area(self) -> float:
-        return self.dim[0] * self.dim[1]
+        return self.contour_area
+        # return self.dim[0] * self.dim[1]
 
     def has_min_area(self) -> bool:
         return self.obj_type.min_area is None or self.get_area() >= self.obj_type.min_area
@@ -48,24 +50,36 @@ class ObjectType:
     fixed_dim: Optional[Tuple[float, float]] = None
     min_area: Optional[float] = None
     priority: int = 0
+    min_distance: Dict[str, float] = field(default_factory=dict)
 
     def filter_positions(self, positions: List[ObjectPosition], previous_positions: List[ObjectPosition]) -> List[ObjectPosition]:
         if self.max_objects is not None and self.max_objects < len(positions):
-            sort_key = ObjectPosition.get_area
-            sorted_pos = sorted(positions, key=sort_key, reverse=True)
-            return sorted_pos[:self.max_objects]
+            
+            filtered_positions = list(positions)
+            
+            for pos in previous_positions:
+                min_distance = self.min_distance.get(pos.obj_type.obj_id)
+                if min_distance is not None:
+                    for obj_pos in positions:
+                        if np.linalg.norm(np.array(obj_pos.pos) - np.array(pos.pos)) < min_distance:
+                            filtered_positions.remove(obj_pos)
+            
+            obj_count = min(len(filtered_positions), self.max_objects)
+            
+            filtered_positions.sort(key=ObjectPosition.get_area, reverse=True)
+            return filtered_positions[:obj_count]
         else:
             return list(positions)
 
 
 OBJ_TYPES = [
-    ObjectType('iron_man', 1, (0.07, 0.07)),
-    ObjectType('captain_america', 1, (0.07, 0.07)),
+    ObjectType('iron_man', 1, (0.07, 0.07), priority=1, min_distance={'turtlebot': 0.1}),
+    ObjectType('captain_america', 1, (0.07, 0.07), min_distance={'iron_man': 0.1}),
     ObjectType('hulk', 1, (0.07, 0.07)),
     ObjectType('free_space'),
     ObjectType('obstacles', min_area=0.005),
     ObjectType('wall'),
-    ObjectType('turtlebot', 1, (0.1, 0.1)),
+    ObjectType('turtlebot', 1, (0.1, 0.1), priority=2),
     ObjectType('background')
 ]
 
@@ -179,7 +193,7 @@ def handle_client(conn: Connection):
                         positions = []
                         for hull in hull_list:
                             rect = get_normalized_rotated_rect(hull, preprocess)
-                            pos = ObjectPosition(obj_type, *rect)
+                            pos = ObjectPosition(obj_type, *rect, cv2.contourArea(hull))
                             if not pos.has_min_area():
                                 continue
                             positions.append(pos)
