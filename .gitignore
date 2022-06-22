@@ -4,3 +4,4 @@ __pycache__/
 /checkpoints
 /rsyncs
 /object_detection
+segmentation/inference_old.py
