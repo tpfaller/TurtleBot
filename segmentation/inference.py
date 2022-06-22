@@ -3,6 +3,7 @@ import math
 import time
 import cv2
 import json
+from cv2 import sort
 import numpy as np
 import torch
 from torchvision import transforms as T
@@ -23,20 +24,53 @@ def extract_objects(mask: torch.Tensor, obj_classes, args):
     Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
     :return: obj_label, Bounding Box
     """
+
+    def filter_objects(obj_label, hull):
+
+        max_objects = { "free_space": 1,
+                    "captain_america": 1,
+                    "iron_man": 1,
+                    "hulk": 1,
+                    "obstacles": 4,
+                    "turtlebot": 2 # iron_man bug
+                    }
+
+        obj_sizes = []
+        for i in hull:
+            obj_sizes.append(len(i.flatten()))
+
+        zipped = zip(hull, obj_sizes)
+        sorted_objects = sorted(zipped, key=lambda x: x[1], reverse=True)
+        
+        max = max_objects[obj_classes[obj_label]]
+        sorted_objects = [obj[0] for obj in sorted_objects[0:max]]
+        
+        return obj_label, sorted_objects
+
     if args.mode == 'turtlebot':
         objects_ids = [0,1,2,4]
     elif args.mode == 'topdown':
-        objects_ids = [0,1,2,3,4,6] 
-    obj_label, bboxes = list(), list()
+        objects_ids = [0,1,2,4,6]
+    obj_labels, bboxes = list(), list()
     for i, obj in enumerate(obj_classes):
         if i in objects_ids:
             if torch.max(mask[i]) == 1:
                 contour, _ = cv2.findContours(mask[i].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 # hull = [cv2.convexHull(c) for c in contour]
-                obj_label.append(i)
+                obj_labels.append(i)
                 bboxes.append(contour)
 
-    return obj_label, bboxes
+    obj_labels, hulls = obj_labels, bboxes
+
+    filtered_object_labels = []
+    filtered_hulls = []
+
+    for obj, hull in zip(obj_labels, hulls):
+        filtered_object_label, filtered_hull = filter_objects(obj, hull)
+        filtered_object_labels.append(filtered_object_label) 
+        filtered_hulls.append(filtered_hull)
+
+    return filtered_object_labels, filtered_hulls
 
 
 def extract_figures(mask: torch.Tensor):
@@ -116,6 +150,7 @@ def get_corners(hulls, obj):
     
         output: list of all four corners and the midpoint'''
     positions = []
+    hull_sizes = []
     for hull in hulls:
         x_list = []
         y_list = []
@@ -134,6 +169,7 @@ def get_corners(hulls, obj):
                                 [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
                                 [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
                                 [int(max(x_list)-((max(x_list)-min(x_list))//2)), int(max(y_list)-((max(y_list)-min(y_list))//2))]])
+
     return positions
 
 def positions_to_json(obj_classes, obj_labels, hulls):
@@ -142,7 +178,7 @@ def positions_to_json(obj_classes, obj_labels, hulls):
         syntax dict/json: "object_name": [[corner_1],[corner_2],[corner_3],[corner_4],[mid_point_of_object]'''
 
     tmp = {}
-    tmp["Spielfeld"] = []
+    # tmp["Spielfeld"] = []
     for obj, hull in zip(obj_labels, hulls):
         figure = obj_classes[obj]
         corners = get_corners(hull, obj)
@@ -151,6 +187,16 @@ def positions_to_json(obj_classes, obj_labels, hulls):
         else:
             if len(corners) != 1:
                 for i in range(0, len(corners)):
+
+                    # debugging - second turtlebot is iron_man
+                    if figure == "turtlebot":
+                        if i == 0:
+                            tmp[figure] = corners[0]
+                        elif i == 1:
+                            figure = "iron_man"
+                            tmp[figure] = corners[0]
+                        continue
+                        
                     tmp[f"{figure}_{i}"] = corners[i]
             else:
                 tmp[figure] = corners[0]
@@ -169,6 +215,7 @@ def stream_video(args):
     model = load_pretrained_model(args)
     model.eval()
     cap = cv2.VideoCapture(args.video)
+    # cap = cv2.VideoCapture(2)
     if cap.isOpened():
         print("Error opening video file")
 
@@ -192,14 +239,11 @@ def stream_video(args):
                 # scale = (frame.shape[0]/400, frame.shape[1]/400)
 
                 obj_labels, hulls = extract_objects(preds, obj_classes, args)
+                # print(positions_to_json(obj_classes, obj_labels, hulls)[0])
 
                 frame = cv2.resize(frame, (400, 400))
 
-                print(positions_to_json(obj_classes, obj_labels, hulls)[0])
-                print(positions_to_json(obj_classes, obj_labels, hulls)[1])
-
                 for obj, hull in zip(obj_labels, hulls):
-                    # print(obj_classes[obj], hull)
                     cv2.drawContours(frame, hull, -1, COLORS[obj], 3)
 
                     ## mitte und eckpunkte als rote Punkte anzeigen lassen (debugging)
@@ -221,7 +265,7 @@ def stream_video(args):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_v1.pth')
+    parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_v3.pth')
     parser.add_argument('--video', type=str, default='data/topdown-valid-video.mp4')
     parser.add_argument('--arch', type=str, default='lraspp', choices=['deeplab', 'lraspp'])
     parser.add_argument('--mode', type=str, default='topdown',
