@@ -170,9 +170,19 @@ def extract_objects(mask: torch.Tensor, obj_classes, args):
     Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
     :return: obj_label, Bounding Box
     """
+<<<<<<< Updated upstream
 
     objects_ids = [0, 1, 2, 4, 6]
     objects_num = [1, 1, 1, 4, 1]
+=======
+    if args.mode == 'turtlebot':
+        objects_ids = [0, 1, 2, 4, 6]
+        objects_num = [1, 1, 1, 4, 1]
+    elif args.mode == 'topdown':
+        objects_ids = [0, 1, 2, 3, 4, 6]
+        objects_num = [1, 1, 1, 1, 4, 1]
+    
+>>>>>>> Stashed changes
     obj_label, bboxes = list(), list()
     for obj, num in zip(objects_ids, objects_num):
         # Check if there are pixels from class obj
@@ -214,6 +224,7 @@ def stream_video_topdown_view(args):
     # === Loop over Frames ===
     while cap.isOpened():
         ret, frame = cap.read()
+        frame = cv2.resize(frame, (400, 400))
         n_frame += 1
         # === Process every 10th frame ===
         if n_frame % 10 == 0:
@@ -308,6 +319,10 @@ def stream_video_turtlebot_view(args):
                     # center_l.append((x, y))
 
                 cv2.imshow('Frame', frame)
+<<<<<<< Updated upstream
+=======
+                cv2.resizeWindow('Frame', 600, 600)
+>>>>>>> Stashed changes
 
                 # === Draw the Segmentation Map ===
                 # image = inv_norm(frame_tensor).squeeze()
@@ -326,15 +341,30 @@ def stream_video_turtlebot_view(args):
 def main():
 
     parser = argparse.ArgumentParser()
+<<<<<<< Updated upstream
     # parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_v3.pth')
     # parser.add_argument('--video', type=str, default='data/topdown-valid-video.mp4')
     parser.add_argument('--weights_dir', type=str, default='weights/turtlebot/lraspp_v2.pth')
     parser.add_argument('--video', type=str, default='data/test_video.mp4')
+=======
+    # parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_v1.pth')
+    # parser.add_argument('--video', type=str, default='data/topdown-valid-video.mp4')
+    parser.add_argument('--weights_dir', type=str, default='weights/turtlebot/lraspp_v2.pth')
+    parser.add_argument('--video', type=str, default='data/turtlebot-valid-video.mp4')
+>>>>>>> Stashed changes
     parser.add_argument('--arch', type=str, default='lraspp', choices=['deeplab', 'lraspp'])
     parser.add_argument('--mode', type=str, default='turtlebot',
                         choices=['turtlebot', 'topdown'])
     args = parser.parse_args()
+<<<<<<< Updated upstream
     stream_video_turtlebot_view(args)
+=======
+
+    if args.mode == 'turtlebot':
+        stream_video_turtlebot_view(args)
+    elif args.mode == 'topdown':
+        stream_video_topdown_view(args)
+>>>>>>> Stashed changes
 
 
 if __name__ == '__main__':
