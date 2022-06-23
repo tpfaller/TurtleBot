@@ -73,9 +73,9 @@ class ObjectDetection(RealsenseTopicReader):
 
     def handle_images(self, color_image, depth_image, color_timestamp, depth_timestamp, color_intrin):
         super(ObjectDetection, self).handle_images(color_image, depth_image, color_timestamp, depth_timestamp, color_intrin)
+        color_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
         self.client.send(color_image)
         object_list = self.client.recv()
-        print('Detected %d objects' % len(object_list))
         detected_objects = []
         d_height = len(depth_image)
         d_width = 0
