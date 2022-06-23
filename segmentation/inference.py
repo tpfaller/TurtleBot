@@ -17,7 +17,7 @@ from augmentations import PreProcess, InvertNormalization
 import utils
 
 
-def extract_objects_old(mask: torch.Tensor, obj_classes, args):
+def extract_objects(mask: torch.Tensor, obj_classes, args):
     """
     Takes a Segmentation Mask as Input and detects objects in it.
     Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
@@ -26,7 +26,7 @@ def extract_objects_old(mask: torch.Tensor, obj_classes, args):
     if args.mode == 'turtlebot':
         objects_ids = [0,1,2,4]
     elif args.mode == 'topdown':
-        objects_ids = [0,1,2,3,4,5,6] 
+        objects_ids = [0,1,2,4,5,6] 
     obj_label, bboxes = list(), list()
     for i, obj in enumerate(obj_classes):
         if i in objects_ids:
@@ -38,7 +38,7 @@ def extract_objects_old(mask: torch.Tensor, obj_classes, args):
 
     return obj_label, bboxes
 
-def extract_objects(mask: torch.Tensor, obj_classes, args):
+def extract_objects_new(mask: torch.Tensor, obj_classes, args):
     """
     Takes a Segmentation Mask as Input and detects objects in it.
     Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
