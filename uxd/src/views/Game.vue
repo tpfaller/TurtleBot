@@ -143,7 +143,7 @@ export default {
         },
         initRos() {
             var ros = new ROSLIB.Ros({
-                url: 'ws://localhost:9090'
+                url : 'ws://192.168.0.201:9090'
             });
 
             ros.on('connection', function () {
