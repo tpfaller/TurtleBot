@@ -140,6 +140,8 @@ def stop_movement():
 
 def object_detection(array):
     for object in array:
+        if object[2] > 2000:
+            continue
         if object[0] == "captain_america":
             captain_america_coordinates.append(absolute_coordinates(object[2], object[1]))
         if object[0] == "hulk":
@@ -326,7 +328,7 @@ if __name__ == '__main__':
                 rospy.sleep(1)
                 finish += 1
         
-        if counter%5000:
+        if counter%100000000:
             print("")
             print("")
             print("Hulk: ", hulk_coordinates)
