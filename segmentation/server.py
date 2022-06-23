@@ -6,7 +6,9 @@ import threading
 from typing import Dict, List, Optional, Tuple
 
 import torch
-from augmentations import PreProcess
+from torchvision.utils import draw_segmentation_masks
+from torchvision import transforms
+from augmentations import InvertNormalization, PreProcess
 from inference import extract_figures, extract_objects
 
 from models import load_pretrained_model
@@ -141,6 +143,9 @@ def handle_client(conn: Connection):
             buf = conn._recv_bytes()
             image = ForkingPickler.loads(buf.getbuffer(), encoding='bytes')
             
+            # cv2.imshow('test', image)
+            # cv2.waitKey(0)
+
             # Preprocess RGB-Frame
             rgb_tensor = preprocess(image)
 
@@ -152,10 +157,25 @@ def handle_client(conn: Connection):
             # Extract detected Objects from Prediction
             if mode == 'turtlebot':
                 obj_labels, bboxes, t_centers = extract_figures(prediction)
+                # COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46), (255, 0, 0), (0, 0, 0)]
+                # image = InvertNormalization()(rgb_tensor)
+                # mask = draw_segmentation_masks(image.squeeze().to(torch.uint8), prediction.to(torch.bool), alpha=0.4, colors=COLORS)
+                # fr = mask.permute(1,2,0).numpy()
+                # print(image.size(), rgb_tensor.size())
+                # cv2.imshow('test', fr)
+                # if cv2.waitKey(25) & 0xFF == ord('q'):
+                #     cv2.destroyAllWindows()
                 objects = [(args.obj_classes[obj], normalize(pos, preprocess))
                             for (obj, pos) in zip(obj_labels, t_centers)]
             else:
                 obj_labels, hulls = extract_objects(prediction, OBJ_CLASSES, args)
+                # COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46), (255, 0, 0), (0, 0, 0)]
+                # image = InvertNormalization()(rgb_tensor)
+                # mask = draw_segmentation_masks(image.squeeze().to(torch.uint8), prediction.to(torch.bool), alpha=0.4, colors=COLORS)
+                # fr = mask.permute(1,2,0).numpy()
+                # print(image.size(), rgb_tensor.size())
+                # cv2.imshow('test', fr)
+                # cv2.waitKey(0)
                 objects = []
 
                 field_x = 0
