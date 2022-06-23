@@ -115,7 +115,7 @@ def handle_client(conn: Connection):
     if mode == 'turtlebot':
         weight_version = 'v2'
     elif mode == 'topdown':
-        weight_version = 'v1'
+        weight_version = 'v3'
     else:
         print('Unknown mode: %s' % str(mode))
         conn.close()
