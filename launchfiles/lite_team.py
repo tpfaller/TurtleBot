@@ -1,6 +1,5 @@
 from statistics import median
 import statistics
-from typing import OrderedDict
 import rospy
 import roslaunch
 import subprocess
@@ -39,10 +38,14 @@ def callback_odom(msg):
 
 def callback_ki(msg):
     global array
-    object_id = msg.objects.obj_id.lower()
-    distance = msg.objects.distance
-    angle = msg.objects.angle
-    array = [[object_id, angle, distance]]
+    x = msg.objects
+    array = []
+    for i in x:
+        object_id = i.obj_id.lower()
+        distance = i.distance
+        angle = i.angle
+        array.append([object_id, angle, distance])
+    #print("array ", array)
 
 def callback_uxd(msg):
     global order
@@ -83,7 +86,8 @@ def rotate():
     rot.angular.z = 0
     pub_rotate.publish(rot)
 
-def assign_goal(pose):  
+def assign_goal(pose): 
+    print("pose", pose) 
     goal_pose = MoveBaseGoal()        
     goal_pose.target_pose.header.frame_id = 'map'
     goal_pose.target_pose.pose.position.x = pose[0][0]
@@ -109,7 +113,7 @@ def move_to_one_goal(goal_point):
     sc.playWave(path_to_sounds+"say-beep.wav")
 
 def absolute_coordinates(distance, angle):
-    distance = (distance/100.0)
+    distance = (distance/1000.0)
 
     # Bot schaut von oben nach unten
     if orientation_w <= 0.35 and orientation_w >= -0.35 and orientation_z >= 0.935:
@@ -143,46 +147,54 @@ def object_detection(array):
         if object[0] == "iron_man":
             iron_man_coordinates.append(absolute_coordinates(object[2], object[1]))
 
-def anfahrt(finish):
+def anfahrt(finish, explore_lite):
     if uxd_goal[0] == "captain_america":
         if len(captain_america_coordinates) > 0:
+            print("Terminiere E_L")
             explore_lite.terminate()
             stop_movement()
             rospy.sleep(3)
             median_coordinates = get_median_of_coordinates(captain_america_coordinates)
+            print("median_coords: ", median_coordinates)
             drive_to_coordiantes(median_coordinates)
+            print("Starte E_L")
             explore_lite = subprocess.Popen(["roslaunch", "explore_lite", "explore.launch"])
             rospy.sleep(1)
             finish += 1
 
     if uxd_goal[0] == "hulk":
+        print("Len Coordi", len(hulk_coordinates))
         if len(hulk_coordinates) > 0:
+            print("Terminiere E_L")
             explore_lite.terminate()
             stop_movement()
             rospy.sleep(3)
             median_coordinates = get_median_of_coordinates(hulk_coordinates)
+            print("median_coords: ", median_coordinates)
             drive_to_coordiantes(median_coordinates)
+            print("Starte E_L")
             explore_lite = subprocess.Popen(["roslaunch", "explore_lite", "explore.launch"])
             rospy.sleep(1)
             finish += 1
 
     if uxd_goal[0] == "iron_man":
         if len(iron_man_coordinates) > 0:
+            print("Terminiere E_L")
             explore_lite.terminate()
             stop_movement()
             rospy.sleep(3)
             median_coordinates = get_median_of_coordinates(iron_man_coordinates)
+            print("median_coords: ", median_coordinates)
             drive_to_coordiantes(median_coordinates)
+            print("Starte E_L")
             explore_lite = subprocess.Popen(["roslaunch", "explore_lite", "explore.launch"])
             rospy.sleep(1)
             finish += 1
 
 def drive_to_coordiantes(median_coordinates):
-    for coordinates in median_coordinates:
-        print("coords: ", coordinates)
-        goal = assign_goal(coordinates)
-        move_to_one_goal(goal)
-        uxd_pub.publish(Bool(True))
+    goal = assign_goal(median_coordinates)
+    move_to_one_goal(goal)
+    uxd_pub.publish(Bool(True))
     
 def get_median_of_coordinates(saved_coordinates):
     median_x = [] 
@@ -222,7 +234,7 @@ if __name__ == '__main__':
 
     uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
     roslaunch.configure_logging(uuid)
-    launch = roslaunch.parent.ROSLaunchParent(uuid, ["/home/aimotion/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo/launch/init_node.launch"])
+    launch = roslaunch.parent.ROSLaunchParent(uuid, ["/home/aimotion/TBP/init_node.launch"])
     launch.start()
 
     slam_node = subprocess.Popen(["roslaunch", "turtlebot3_slam", "turtlebot3_slam.launch"])
@@ -231,9 +243,10 @@ if __name__ == '__main__':
 
     counter = 1
     finish = 0
+    order = ""
+    array = []
     
     # Erhaltenen Reihenfolge der Anfahrt in goals_in_order (UXD)
-    uxd_goal = [uxd_goal] = order
 
     hulk_coordinates = []
     captain_america_coordinates = []
@@ -245,11 +258,13 @@ if __name__ == '__main__':
             waitUntil()
             rospy.sleep(1)
 
-            rotate()
+            #rotate()
             rospy.sleep(1)
             rospy.loginfo("Rotation Done")
 
             counter = 2
+
+            rospy.sleep(10)
 
             move_base = subprocess.Popen(["roslaunch", "turtlebot3_navigation", "move_base.launch"])
             explore_lite = subprocess.Popen(["roslaunch", "explore_lite", "explore.launch"])
@@ -260,8 +275,67 @@ if __name__ == '__main__':
             object_detection(array)
             array = []
 
-        anfahrt()
+        uxd_goal = [order]
+
+        if uxd_goal[0] == "captain_america":
+            if len(captain_america_coordinates) > 0:
+                print("Terminiere E_L")
+                explore_lite.terminate()
+                stop_movement()
+                rospy.sleep(3)
+                median_coordinates = get_median_of_coordinates(captain_america_coordinates)
+                print(order)
+                print("median_coords: ", median_coordinates)
+                print("")
+                drive_to_coordiantes(median_coordinates)
+                print("Starte E_L")
+                explore_lite = subprocess.Popen(["roslaunch", "explore_lite", "explore.launch"])
+                rospy.sleep(1)
+                finish += 1
+
+        if uxd_goal[0] == "hulk":
+            print("Len Coordi", len(hulk_coordinates))
+            if len(hulk_coordinates) > 0:
+                print("Terminiere E_L")
+                explore_lite.terminate()
+                stop_movement()
+                rospy.sleep(3)
+                median_coordinates = get_median_of_coordinates(hulk_coordinates)
+                print(order)
+                print("median_coords: ", median_coordinates)
+                print("")
+                drive_to_coordiantes(median_coordinates)
+                print("Starte E_L")
+                explore_lite = subprocess.Popen(["roslaunch", "explore_lite", "explore.launch"])
+                rospy.sleep(1)
+                finish += 1
+
+        if uxd_goal[0] == "iron_man":
+            if len(iron_man_coordinates) > 0:
+                print("Terminiere E_L")
+                explore_lite.terminate()
+                stop_movement()
+                rospy.sleep(3)
+                median_coordinates = get_median_of_coordinates(iron_man_coordinates)
+                print(order)
+                print("median_coords: ", median_coordinates)
+                print("")
+                drive_to_coordiantes(median_coordinates)
+                print("Starte E_L")
+                explore_lite = subprocess.Popen(["roslaunch", "explore_lite", "explore.launch"])
+                rospy.sleep(1)
+                finish += 1
         
+        if counter%5000:
+            print("")
+            print("")
+            print("Hulk: ", hulk_coordinates)
+            print("Captain America: ", captain_america_coordinates)
+            print("Iron Man: ", iron_man_coordinates)
+            print("")
+            print("")
+        
+
         if finish == 3:
             explore_lite.terminate()
             move_base.terminate()
@@ -269,7 +343,7 @@ if __name__ == '__main__':
 
             launch.shutdown()
 
-        rospy.spin()
+
 
     # shut down everything
     explore_lite.terminate()
