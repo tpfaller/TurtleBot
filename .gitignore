@@ -32,3 +32,5 @@ wöchentliche_Updates/
 *.njsproj
 *.sln
 *.sw?
+/object_detection
+segmentation/inference_old.py

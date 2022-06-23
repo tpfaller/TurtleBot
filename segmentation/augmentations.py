@@ -59,7 +59,7 @@ class HorizontalFlip(object):
 
 class Jitter(object):
     def __init__(self):
-        self.operation = t.ColorJitter(brightness=.7, contrast=.4, hue=.1, saturation=.2)
+        self.operation = t.ColorJitter(brightness=.4, contrast=.2, hue=.0, saturation=.0)
 
     def __call__(self, image, target):
         image = self.operation(image)

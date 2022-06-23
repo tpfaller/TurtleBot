@@ -67,7 +67,7 @@ export default {
             buttonDisabled: false,
             buttonLoading: false,
             positionData: JSON.parse(JSON.stringify(PosData)),
-            coinSize: 10,
+            coinSize: 40,
             coinCount: 20,
             ros: this.initRos(),
             current: "order",

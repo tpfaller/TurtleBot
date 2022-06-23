@@ -291,16 +291,6 @@ export default {
                 }
             }, this);
         },
-        checkHeroCollision() {
-            this.heroes.forEach(function (hero, i) {
-                if (this.heroes_reached[this.order.indexOf(this.heroes_names[i])]) return;
-                if (this.bot[0] + this.bot[2] >= hero[0] && this.bot[0] <= hero[0] + hero[2] && this.bot[1] + this.bot[3] >= hero[1] && this.bot[1] <= hero[1] + hero[3]) {
-                    this.heroes_reached[this.order.indexOf(this.heroes_names[i])] = true;
-                    console.log("heroes reached " + this.heroes_reached);
-                    this.$emit('updateReachedHeroes', this.heroes_reached);
-                }
-            }, this);
-        },
         setupBot() {
             var image = document.createElement('img');
             image.onload = () => this.drawBot();

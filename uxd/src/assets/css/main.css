@@ -228,6 +228,10 @@ section.game {
     min-height: 0;
 }
 
+section.leaderboard {
+    padding: 0;
+    gap: 2rem;
+}
 
 section.intro {
     gap: 2rem;
@@ -262,7 +266,7 @@ section.about {
     justify-content: space-between;
 }
 
-.col-2 > * {
+.col-2>* {
     width: calc(50% - 1rem);
 }
 
@@ -570,7 +574,6 @@ section.game, section.game > #game-instructions > .content{
 #confetti {
     position: absolute;
     left: 0;
-    top: 0;
     right: 0;
     top: 0;
     bottom: 0;

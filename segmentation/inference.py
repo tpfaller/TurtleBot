@@ -17,7 +17,7 @@ from augmentations import PreProcess, InvertNormalization
 import utils
 
 
-def extract_objects(mask: torch.Tensor, obj_classes, args):
+def extract_objects_old(mask: torch.Tensor, obj_classes, args):
     """
     Takes a Segmentation Mask as Input and detects objects in it.
     Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
@@ -26,7 +26,7 @@ def extract_objects(mask: torch.Tensor, obj_classes, args):
     if args.mode == 'turtlebot':
         objects_ids = [0,1,2,4]
     elif args.mode == 'topdown':
-        objects_ids = [0,1,2,4,5,6] 
+        objects_ids = [0,1,2,3,4,5,6] 
     obj_label, bboxes = list(), list()
     for i, obj in enumerate(obj_classes):
         if i in objects_ids:
@@ -37,6 +37,39 @@ def extract_objects(mask: torch.Tensor, obj_classes, args):
                 bboxes.append(contour)
 
     return obj_label, bboxes
+
+def extract_objects(mask: torch.Tensor, obj_classes, args):
+    """
+    Takes a Segmentation Mask as Input and detects objects in it.
+    Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
+    :return: obj_label, Bounding Box
+    """
+    if args.mode == 'turtlebot':
+        objects_ids = [0, 1, 2]
+        objects_num = [1, 1, 1]
+    elif args.mode == 'topdown':
+        objects_ids = [0, 1, 2, 3, 4, 6]
+        objects_num = [1, 1, 1, 1, 4, 1]
+    obj_label, bboxes = list(), list()
+    for obj, num in zip(objects_ids, objects_num):
+        # Check if there are pixels from class obj
+        if torch.max(mask[obj]) == 1:
+            # Find contours in Mask
+            contour, _ = cv2.findContours(mask[obj].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # Calculate Area per contour object and sort by area
+            contour_and_area = [(c, cv2.contourArea(c)) for c in contour]
+            contour_and_area.sort(key=lambda x: x[1], reverse=True)
+
+            for index in range(num):
+                # Get the given amount of objects, Append None if object detection failed
+                try:
+                    hull, area = contour_and_area.pop(0)
+                except IndexError:
+                    hull, area = None, 0
+                obj_label.append(obj)
+                bboxes.append(hull)
+
+    return obj_label, [bboxes]
 
 
 def extract_figures(mask: torch.Tensor):
@@ -115,21 +148,40 @@ def get_corners(hulls, obj):
     ''' input: hulls of objects
     
         output: list of all four corners and the midpoint'''
+
     positions = []
+    x_list = []
+    y_list = []
     for hull in hulls:
-        x_list = []
-        y_list = []
-        for tup in hull:
-            x_list.append(tup[0][0])
-            y_list.append(tup[0][1])
-        if obj != 3:
-            positions.append([  [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(x_list == min(x_list))[0][0]])],\
-                                [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(x_list == max(x_list))[0][0]])],\
-                                [int(x_list[np.where(y_list == min(y_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
-                                [int(x_list[np.where(y_list == max(y_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
-                                [int(max(x_list)-((max(x_list)-min(x_list))//2)), int(max(y_list)-((max(y_list)-min(y_list))//2))]])
-        else:
-            positions.append([  [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
+        x_list.append(hull[0][0])
+        y_list.append(hull[0][1])
+    if obj != 3:
+            # print("LEN", len(np.where(x_list == min(x_list))[0])-1)
+            # print("//2", (len(np.where(x_list == min(x_list))[0])-1)//2)
+
+            # print(np.where(x_list == min(x_list))[0])
+            # print(int(x_list[np.where(x_list == min(x_list))[0][(len(np.where(x_list == min(x_list))[0])-1)//2]]))
+            # print(int(x_list[np.where(x_list == min(x_list))[0][(len(np.where(x_list == min(x_list))[0]))//2]]))
+
+
+            # print(np.where(x_list == max(x_list))[0])
+            # print()
+            # print(np.where(y_list == min(y_list))[0])
+            # print()
+            # print(np.where(y_list == max(y_list))[0])
+            # print()
+            # positions.append([  [int(x_list[(len(np.where(x_list == min(x_list))[0])-1)//2]), int(y_list[(len(np.where(x_list == min(x_list))[0])-1)//2])],\
+            #                     [int(x_list[(len(np.where(x_list == max(x_list))[0])-1)//2]), int(y_list[(len(np.where(x_list == max(x_list))[0])-1)//2])],\
+            #                     [int(x_list[(len(np.where(y_list == min(y_list))[0])-1)//2]), int(y_list[(len(np.where(y_list == min(y_list))[0])-1)//2])],\
+            #                     [int(x_list[(len(np.where(y_list == max(y_list))[0])-1)//2]), int(y_list[(len(np.where(y_list == max(y_list))[0])-1)//2])],\
+            #                     [int(max(x_list)-((max(x_list)-min(x_list))//2)), int(max(y_list)-((max(y_list)-min(y_list))//2))]])
+        positions.append([  [int(x_list[np.where(x_list == min(x_list))[0][(len(np.where(x_list == min(x_list))[0]))//2]]), int(y_list[np.where(x_list == min(x_list))[0][(len(np.where(x_list == min(x_list))[0]))//2]])],\
+					            [int(x_list[np.where(x_list == max(x_list))[0][(len(np.where(x_list == max(x_list))[0]))//2]]), int(y_list[np.where(x_list == max(x_list))[0][(len(np.where(x_list == max(x_list))[0]))//2]])],\
+					            [int(x_list[np.where(y_list == min(y_list))[0][(len(np.where(y_list == min(y_list))[0]))//2]]), int(y_list[np.where(y_list == min(y_list))[0][(len(np.where(y_list == min(y_list))[0]))//2]])],\
+					            [int(x_list[np.where(y_list == max(y_list))[0][(len(np.where(y_list == max(y_list))[0]))//2]]), int(y_list[np.where(y_list == max(y_list))[0][(len(np.where(y_list == max(y_list))[0]))//2]])],\
+					            [int(max(x_list)-((max(x_list)-min(x_list))//2)), int(max(y_list)-((max(y_list)-min(y_list))//2))]])
+    else:
+        positions.append([  [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
                                 [int(x_list[np.where(x_list == min(x_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
                                 [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(y_list == max(y_list))[0][0]])],\
                                 [int(x_list[np.where(x_list == max(x_list))[0][0]]), int(y_list[np.where(y_list == min(y_list))[0][0]])],\
@@ -143,17 +195,19 @@ def positions_to_json(obj_classes, obj_labels, hulls):
 
     tmp = {}
     tmp["Spielfeld"] = []
-    for obj, hull in zip(obj_labels, hulls):
+    obstacle_count = 0
+    for i in range(len(obj_labels)):
+        hull = hulls[0][i]
+        obj = obj_labels[i]
         figure = obj_classes[obj]
         corners = get_corners(hull, obj)
         if figure == "free_space":
             tmp["Spielfeld"] = [(corners[0][2][0]-corners[0][1][0]),(corners[0][1][1]-corners[0][0][1])]
+        elif figure == "obstacles":
+            tmp[f"{figure}_{obstacle_count}"] = corners[0]
+            obstacle_count += 1      
         else:
-            if len(corners) != 1:
-                for i in range(0, len(corners)):
-                    tmp[f"{figure}_{i}"] = corners[i]
-            else:
-                tmp[figure] = corners[0]
+            tmp[figure] = corners[0]
 
     json_tmp = json.dumps(tmp)
 
@@ -192,13 +246,11 @@ def stream_video(args):
                 # scale = (frame.shape[0]/400, frame.shape[1]/400)
 
                 obj_labels, hulls = extract_objects(preds, obj_classes, args)
+                print(positions_to_json(obj_classes, obj_labels, hulls)[0])
 
                 frame = cv2.resize(frame, (400, 400))
 
-                print(positions_to_json(obj_classes, obj_labels, hulls)[0])
-                print(positions_to_json(obj_classes, obj_labels, hulls)[1])
-
-                for obj, hull in zip(obj_labels, hulls):
+                for obj, hull in zip(obj_labels, hulls[0]):
                     # print(obj_classes[obj], hull)
                     cv2.drawContours(frame, hull, -1, COLORS[obj], 3)
 
@@ -221,7 +273,7 @@ def stream_video(args):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_v1.pth')
+    parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_v3.pth')
     parser.add_argument('--video', type=str, default='data/topdown-valid-video.mp4')
     parser.add_argument('--arch', type=str, default='lraspp', choices=['deeplab', 'lraspp'])
     parser.add_argument('--mode', type=str, default='topdown',
