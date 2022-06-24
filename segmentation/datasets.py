@@ -9,7 +9,6 @@ import torchvision
 
 class SegmentationDataset(Dataset):
 	def __init__(self, root: str, transform=None, mode=None):
-		[os.path.join(root, x) for x in os.listdir(root) if x.endswith('.jpg')]
 		# self.images = sorted([os.path.join(root, x) for x in os.listdir(root) if x.endswith('.jpg')])
 		# self.masks = sorted([os.path.join(root, x) for x in os.listdir(root) if x.endswith('truth.png')])
 		self.masks = sorted([os.path.join(root, x) for x in os.listdir(root) if x.endswith('semantic_colored.png')])

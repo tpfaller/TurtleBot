@@ -193,6 +193,8 @@ def handle_client(conn: Connection):
                         borders = [0, 0, 1, 1]
 
                         for hull in hull_list:
+                            if hull is None:
+                                continue
                             pos, dim = get_normalized_rect(hull, preprocess)
                             side = 0
                             if dim[0] > dim[1]:

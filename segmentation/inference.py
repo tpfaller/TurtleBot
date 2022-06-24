@@ -17,83 +17,6 @@ from augmentations import PreProcess, InvertNormalization
 import utils
 
 
-def extract_objects(mask: torch.Tensor, obj_classes, args):
-    """
-    Takes a Segmentation Mask as Input and detects objects in it.
-    Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
-    :return: obj_label, Bounding Box
-    """
-    if args.mode == 'turtlebot':
-        objects_ids = [0,1,2,4]
-    elif args.mode == 'topdown':
-        objects_ids = [0,1,2,4,5,6] 
-    obj_label, bboxes = list(), list()
-    for i, obj in enumerate(obj_classes):
-        if i in objects_ids:
-            if torch.max(mask[i]) == 1:
-                contour, _ = cv2.findContours(mask[i].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                # hull = [cv2.convexHull(c) for c in contour]
-                obj_label.append(i)
-                bboxes.append(contour)
-
-    return obj_label, bboxes
-
-def extract_objects_new(mask: torch.Tensor, obj_classes, args):
-    """
-    Takes a Segmentation Mask as Input and detects objects in it.
-    Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
-    :return: obj_label, Bounding Box
-    """
-    if args.mode == 'turtlebot':
-        objects_ids = [0, 1, 2]
-        objects_num = [1, 1, 1]
-    elif args.mode == 'topdown':
-        objects_ids = [0, 1, 2, 3, 4, 6]
-        objects_num = [1, 1, 1, 1, 4, 1]
-    obj_label, bboxes = list(), list()
-    for obj, num in zip(objects_ids, objects_num):
-        # Check if there are pixels from class obj
-        if torch.max(mask[obj]) == 1:
-            # Find contours in Mask
-            contour, _ = cv2.findContours(mask[obj].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            # Calculate Area per contour object and sort by area
-            contour_and_area = [(c, cv2.contourArea(c)) for c in contour]
-            contour_and_area.sort(key=lambda x: x[1], reverse=True)
-
-            for index in range(num):
-                # Get the given amount of objects, Append None if object detection failed
-                try:
-                    hull, area = contour_and_area.pop(0)
-                except IndexError:
-                    hull, area = None, 0
-                obj_label.append(obj)
-                bboxes.append(hull)
-
-    return obj_label, [bboxes]
-
-
-def extract_figures(mask: torch.Tensor):
-    """
-    Takes a Segmentation Mask as Input and detects objects in it.
-    Explicitly named 'Iron Man', 'Hulk' and 'Captain America'.
-    :return: obj_label, Bounding Box
-    """
-    obj_label, bboxes, centers = list(), list(), list()
-    for i in [0,1,2]:
-        if torch.max(mask[i]) == 1:
-            contour, _ = cv2.findContours(mask[i].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            contour = [(c, cv2.contourArea(c)) for c in contour]
-            contour.sort(key=lambda x: x[1], reverse=True)
-            if contour[0][1] > 300:
-                hull = contour[0][0]
-                M = cv2.moments(hull)
-                m10, m00, m01 = M["m10"], M["m00"]+1e-6, M["m01"]
-                centers.append((int(m10 / m00), int(m01 / m00)))
-                obj_label.append(i)
-                bboxes.append(hull)
-    
-    return obj_label, bboxes, centers
-
 
 def calc_angle(intrin, center, depth):
     x, y, z = rs.rs2_deproject_pixel_to_point(intrin, center, depth)
@@ -105,6 +28,12 @@ def calc_angle(intrin, center, depth):
 def rescale(args, center, preprocess):
     x = int(center[0] * args.width / preprocess.width)
     y = int(center[1] * args.height / preprocess.height)
+    return x, y
+
+
+def rescale_cv2(center, preprocess, shape):
+    x = int(center[0] * shape[0] / preprocess.width)
+    y = int(center[1] * shape[1] / preprocess.height)
     return x, y
 
 
@@ -138,10 +67,32 @@ def stream_realsense(args):
             depth_l.append(depth)
             angle_l.append(calc_angle(intrin, (x, y), depth))
             center_l.append((x, y))
-
         # Information for Path-planning
         info = [*zip(obj_labels, center_l, depth_l, angle_l)]
     # rs_cam.release()
+
+
+def extract_figures(mask: torch.Tensor):
+    """
+    Takes a Segmentation Mask as Input and detects objects in it.
+    Explicitly named 'Iron Man', 'Hulk' and 'Captain America'.
+    :return: obj_label, Bounding Box
+    """
+    obj_label, bboxes, centers = list(), list(), list()
+    for i in [0,1,2]:
+        if torch.max(mask[i]) == 1:
+            contour, _ = cv2.findContours(mask[i].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contour = [(c, cv2.contourArea(c)) for c in contour]
+            contour.sort(key=lambda x: x[1], reverse=True)
+            if contour[0][1] > 200:
+                hull = contour[0][0]
+                M = cv2.moments(hull)
+                m10, m00, m01 = M["m10"], M["m00"]+1e-6, M["m01"]
+                centers.append((int(m10 / m00), int(m01 / m00)))
+                obj_label.append(i)
+                bboxes.append(hull)
+    
+    return obj_label, bboxes, centers
 
 
 def get_corners(hulls, obj):
@@ -213,42 +164,79 @@ def positions_to_json(obj_classes, obj_labels, hulls):
 
     return tmp, json_tmp
 
-def stream_video(args):
+def extract_objects(mask: torch.Tensor, obj_classes, args):
+    """
+    Takes a Segmentation Mask as Input and detects objects in it.
+    Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
+    :return: obj_label, Bounding Box
+    """
     if args.mode == 'turtlebot':
-        obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
-        COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
+        objects_ids = [0, 1, 2, 4, 6]
+        objects_num = [1, 1, 1, 4, 1]
     elif args.mode == 'topdown':
-        obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall', 'turtlebot', 'background']
-        COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46), (255, 0, 0), (0, 0, 0)]
+        objects_ids = [0, 1, 2, 3, 4, 6]
+        objects_num = [1, 1, 1, 1, 4, 1]
+    
+    obj_label, bboxes = list(), list()
+    for obj, num in zip(objects_ids, objects_num):
+        # Check if there are pixels from class obj
+        if torch.max(mask[obj]) == 1:
+            # Find contours in Mask
+            contour, _ = cv2.findContours(mask[obj].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            # Calculate Area per contour object and sort by area
+            contour_and_area = [(c, cv2.contourArea(c)) for c in contour]
+            contour_and_area.sort(key=lambda x: x[1], reverse=True)
+
+            for index in range(num):
+                # Get the given amount of objects, Append None if object detection failed
+                try:
+                    hull, area = contour_and_area.pop(0)
+                except IndexError:
+                    hull, area = None, 0
+                obj_label.append(obj)
+                bboxes.append(hull)
+
+    return obj_label, bboxes
+
+
+def stream_video_topdown_view(args):
+    obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall', 'turtlebot', 'background']
+    COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46), (255, 0, 0), (0, 0, 0)]
+    
+    # === Init and Load Model ===
     model = load_pretrained_model(args)
     model.eval()
-    cap = cv2.VideoCapture(args.video)
-    if cap.isOpened():
-        print("Error opening video file")
-
+    
+    # === Init PreProcessing and Renormalization ===
     preprocess = PreProcess()
     inv_norm = InvertNormalization()
-    # pil = T.ToPILImage()
-    n_frame = 0
 
+    # === Init Camera and Counter ===
+    cap = cv2.VideoCapture(args.video)
+    n_frame = 0
+    
+    # === Loop over Frames ===
     while cap.isOpened():
         ret, frame = cap.read()
+        frame = cv2.resize(frame, (400, 400))
         n_frame += 1
-        if n_frame % 20 == 0:
+        # === Process every 10th frame ===
+        if n_frame % 10 == 0:
             if ret:
+                # === Convert Colorspace from BGR to RGB ===
+                frame_shape = (frame.shape[1], frame.shape[0])
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                # === Preprocess Image for Segmentation ===
                 frame_tensor = preprocess(frame)
-                image = inv_norm(frame_tensor).squeeze()
+                
+                # === Segment Image ===
                 output = model(frame_tensor)['out']
                 idx = torch.argmax(output, dim=1, keepdim=True)
                 preds = torch.zeros_like(output).scatter_(1, idx, 1.).squeeze()
-                mask = draw_segmentation_masks(image.to(torch.uint8), preds.to(torch.bool), alpha=0.4, colors=COLORS)
-
-                # scale = (frame.shape[0]/400, frame.shape[1]/400)
 
                 obj_labels, hulls = extract_objects(preds, obj_classes, args)
                 print(positions_to_json(obj_classes, obj_labels, hulls)[0])
-
-                frame = cv2.resize(frame, (400, 400))
 
                 for obj, hull in zip(obj_labels, hulls[0]):
                     # print(obj_classes[obj], hull)
@@ -260,27 +248,216 @@ def stream_video(args):
                             cv2.circle(frame, tuple(position), 2, (0,0,255), 3)
 
                 cv2.namedWindow('Frame', cv2.WINDOW_KEEPRATIO)
-                cv2.namedWindow('Mask', cv2.WINDOW_KEEPRATIO)
                 cv2.imshow('Frame', frame)
-                cv2.imshow('Mask', mask.permute(1, 2, 0).numpy())
                 cv2.resizeWindow('Frame', 600, 600)
-                cv2.resizeWindow('Mask', 600, 600)
                 if cv2.waitKey(25) & 0xFF == ord('q'):
                     cv2.destroyAllWindows()
                     cap.release()
 
 
+def stream_video_turtlebot_view(args):
+    # Colorencoded Masks
+    obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
+    COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
+    
+    # === Init and Load Model ===
+    model = load_pretrained_model(args)
+    model.eval()
+    
+    # === Init PreProcessing and Renormalization ===
+    preprocess = PreProcess()
+    inv_norm = InvertNormalization()
+
+    # === Init Camera and Counter ===
+    cap = cv2.VideoCapture(args.video)
+    n_frame = 0
+    
+    # === Loop over Frames ===
+    while cap.isOpened():
+        ret, frame = cap.read()
+        n_frame += 1
+
+        # === Process every 10th frame ===
+        if n_frame % 10 == 0:
+            if ret:
+                # === Convert Colorspace from BGR to RGB ===
+                frame_shape = (frame.shape[1], frame.shape[0])
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                # === Preprocess Image for Segmentation ===
+                frame_tensor = preprocess(frame)
+                
+                # === Segment Image ===
+                output = model(frame_tensor)['out']
+                idx = torch.argmax(output, dim=1, keepdim=True)
+                preds = torch.zeros_like(output).scatter_(1, idx, 1.).squeeze()
+
+                # === Get the detected Actionfigures and their position ===
+                obj_label, bboxes, centers = extract_figures(preds)
+
+                # === Loop over all the detected objects and draw the label in the image === 
+                for label, bbox, center in zip(obj_label, bboxes, centers):
+                    # === Centerpoint from Segmentationmap rescaled to the actual point in the frame ===)
+                    center = rescale_cv2(center, preprocess, frame_shape)
+
+                    # === Visualization of the detected Object and Position ===
+                    frame = cv2.putText(frame, obj_classes[label], (center[0], center[1]), 0, 0.6, COLORS[label], 2)
+
+                    # !!!! IMPORTANT !!!! #
+                    # the following lines are needed for the navigation but could not be tested today. 
+                    # eventually we have to fix some bugs tomorrow
+
+                    # depth = depth_frame[center] # eventually change x and y
+                    # depth_l.append(depth)
+                    # angle_l.append(calc_angle(intrin, (x, y), depth))
+                    # center_l.append((x, y))
+
+                cv2.imshow('Frame', frame)
+                cv2.resizeWindow('Frame', 600, 600)
+
+                # === Draw the Segmentation Map ===
+                # image = inv_norm(frame_tensor).squeeze()
+                # mask = draw_segmentation_masks(image.to(torch.uint8), preds.to(torch.bool), alpha=0.4, colors=COLORS)
+                # cv2.namedWindow('Mask', cv2.WINDOW_KEEPRATIO)
+                # cv2.imshow('Mask', mask.permute(1, 2, 0).numpy())
+                # cv2.resizeWindow('Mask', 600, 600)
+
+                # === Stop Processing Video with the key 'q' ===
+                if cv2.waitKey(25) & 0xFF == ord('q'):
+                    cv2.destroyAllWindows()
+                    cap.release()
+
+
+
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_v3.pth')
-    parser.add_argument('--video', type=str, default='data/topdown-valid-video.mp4')
+    # parser.add_argument('--weights_dir', type=str, default='weights/topdown/lraspp_v1.pth')
+    # parser.add_argument('--video', type=str, default='data/topdown-valid-video.mp4')
+    parser.add_argument('--weights_dir', type=str, default='weights/turtlebot/lraspp_v2.pth')
+    parser.add_argument('--video', type=str, default='data/turtlebot-valid-video.mp4')
     parser.add_argument('--arch', type=str, default='lraspp', choices=['deeplab', 'lraspp'])
-    parser.add_argument('--mode', type=str, default='topdown',
+    parser.add_argument('--mode', type=str, default='turtlebot',
                         choices=['turtlebot', 'topdown'])
     args = parser.parse_args()
-    stream_video(args)
+
+    if args.mode == 'turtlebot':
+        stream_video_turtlebot_view(args)
+    elif args.mode == 'topdown':
+        stream_video_topdown_view(args)
 
 
 if __name__ == '__main__':
     main()
+
+# === Dominik und Lukas === 
+
+
+# def stream_video(args):
+#     if args.mode == 'turtlebot':
+#         obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall']
+#         COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46)]
+#     elif args.mode == 'topdown':
+#         obj_classes = ['iron_man', 'captain_america', 'hulk', 'free_space', 'obstacles', 'wall', 'turtlebot', 'background']
+#         COLORS = [(0, 113, 188), (216, 82, 24), (236, 176, 31), (125, 46, 141), (118, 171, 47), (161, 19, 46), (255, 0, 0), (0, 0, 0)]
+#     model = load_pretrained_model(args)
+#     model.eval()
+#     cap = cv2.VideoCapture(args.video)
+#     preprocess = PreProcess()
+#     inv_norm = InvertNormalization()
+#     # pil = T.ToPILImage()
+#     n_frame = 0
+
+#     while cap.isOpened():
+#         ret, frame = cap.read()
+#         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#         n_frame += 1
+#         if n_frame % 10 == 0:
+#             if ret:
+#                 frame_tensor = preprocess(fqrame)
+#                 image = inv_norm(frame_tensor).squeeze()
+#                 output = model(frame_tensor)['out']
+#                 idx = torch.argmax(output, dim=1, keepdim=True)
+#                 preds = torch.zeros_like(output).scatter_(1, idx, 1.).squeeze()
+#                 mask = draw_segmentation_masks(image.to(torch.uint8), preds.to(torch.bool), alpha=0.4, colors=COLORS)
+
+#                 # scale = (frame.shape[0]/400, frame.shape[1]/400)
+
+#                 obj_labels, hulls = extract_objects(preds, obj_classes, args)
+#                 print(positions_to_json(obj_classes, obj_labels, hulls)[0])
+
+#                 frame = cv2.resize(frame, (400, 400))
+
+#                 for obj, hull in zip(obj_labels, hulls[0]):
+#                     # print(obj_classes[obj], hull)
+#                     cv2.drawContours(frame, hull, -1, COLORS[obj], 3)
+
+#                     ## mitte und eckpunkte als rote Punkte anzeigen lassen (debugging)
+#                     for positions in get_corners(hull, obj):
+#                         for position in positions:
+#                             cv2.circle(frame, tuple(position), 2, (0,0,255), 3)
+
+#                 cv2.namedWindow('Frame', cv2.WINDOW_KEEPRATIO)
+#                 cv2.namedWindow('Mask', cv2.WINDOW_KEEPRATIO)
+#                 cv2.imshow('Frame', frame)
+#                 cv2.imshow('Mask', mask.permute(1, 2, 0).numpy())
+#                 cv2.resizeWindow('Frame', 600, 600)
+#                 cv2.resizeWindow('Mask', 600, 600)
+#                 if cv2.waitKey(25) & 0xFF == ord('q'):
+#                     cv2.destroyAllWindows()
+#                     cap.release()
+
+
+# def extract_objects_old(mask: torch.Tensor, obj_classes, args):
+#     """
+#     Takes a Segmentation Mask as Input and detects objects in it.
+#     Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
+#     :return: obj_label, Bounding Box
+#     """
+#     if args.mode == 'turtlebot':
+#         objects_ids = [0,1,2,4]
+#     elif args.mode == 'topdown':
+#         objects_ids = [0,1,2,3,4,6] 
+#     obj_label, bboxes = list(), list()
+#     for i, obj in enumerate(obj_classes):
+#         if i in objects_ids:
+#             if torch.max(mask[i]) == 1:
+#                 contour, _ = cv2.findContours(mask[i].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#                 # hull = [cv2.convexHull(c) for c in contour]
+#                 obj_label.append(i)
+#                 bboxes.append(contour)
+
+#     return obj_label, bboxes
+
+# def extract_objects(mask: torch.Tensor, obj_classes, args):
+#     """
+#     Takes a Segmentation Mask as Input and detects objects in it.
+#     Explicitly named 'Iron Man', 'Hulk', 'Captain America', 'Turtlebot' and 'Obstacles'.
+#     :return: obj_label, Bounding Box
+#     """
+#     if args.mode == 'turtlebot':
+#         objects_ids = [0, 1, 2]
+#         objects_num = [1, 1, 1]
+#     elif args.mode == 'topdown':
+#         objects_ids = [0, 1, 2, 3, 4, 6]
+#         objects_num = [1, 1, 1, 1, 4, 1]
+#     obj_label, bboxes = list(), list()
+#     for obj, num in zip(objects_ids, objects_num):
+#         # Check if there are pixels from class obj
+#         if torch.max(mask[obj]) == 1:
+#             # Find contours in Mask
+#             contour, _ = cv2.findContours(mask[obj].numpy().astype('uint8'), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#             # Calculate Area per contour object and sort by area
+#             contour_and_area = [(c, cv2.contourArea(c)) for c in contour]
+#             contour_and_area.sort(key=lambda x: x[1], reverse=True)
+
+#             for index in range(num):
+#                 # Get the given amount of objects, Append None if object detection failed
+#                 try:
+#                     hull, area = contour_and_area.pop(0)
+#                 except IndexError:
+#                     hull, area = None, 0
+#                 obj_label.append(obj)
+#                 bboxes.append(hull)
+
+#     return obj_label, [bboxes]
