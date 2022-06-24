@@ -178,53 +178,52 @@ def handle_client(conn: Connection):
                 # cv2.waitKey(0)
                 objects = []
 
-                field_x = 0
-                field_y = 0
-                field_width = 1
-                field_height = 1
+                # min_x, min_y, max_x, max_y
+                borders = [0, 0, 1, 1]
                 
                 possible_positions: Dict[int, List[ObjectPosition]] = {}
 
-                for obj_id, hull_list in zip(obj_labels, hulls):
+                for obj_id, hull in zip(obj_labels, hulls):
 
                     if obj_id == 5:
                         # Handle walls
-                        # min_x, min_y, max_x, max_y
-                        borders = [0, 0, 1, 1]
 
-                        for hull in hull_list:
-                            pos, dim = get_normalized_rect(hull, preprocess)
-                            side = 0
-                            if dim[0] > dim[1]:
-                                side = 1
-                            if pos[side] < 0.5:
-                                borders[side] = max(pos[side] + dim[side] - 0.05, 0)
-                            else:
-                                borders[side + 2] = min(pos[side] + 0.05, 1)
-                        
-                        field_x = borders[0]
-                        field_y = borders[1]
-                        field_width = borders[2] - borders[0]
-                        field_height = borders[3] - borders[1]
+                        # for hull in hull_list:
+                        if hull is None:
+                            continue
+                        pos, dim = get_normalized_rect(hull, preprocess)
+                        side = 0
+                        if dim[0] > dim[1]:
+                            side = 1
+                        if pos[side] < 0.5:
+                            borders[side] = max(pos[side] + dim[side] - 0.05, 0)
+                        else:
+                            borders[side + 2] = min(pos[side] + 0.05, 1)
                     else:
                         # Handle game objects
                         obj_type = OBJ_TYPES[obj_id]
 
-                        positions = []
-                        for hull in hull_list:
-                            rect = get_normalized_rotated_rect(hull, preprocess)
-                            pos = ObjectPosition(obj_type, *rect, cv2.contourArea(hull))
-                            if not pos.has_min_area():
-                                continue
-                            positions.append(pos)
-
-                        if len(positions) > 0:
+                        positions = possible_positions.get(obj_id)
+                        if positions is None:
+                            positions = []
                             possible_positions[obj_id] = positions
+                        
+                        # for hull in hull_list:
+                        rect = get_normalized_rotated_rect(hull, preprocess)
+                        pos = ObjectPosition(obj_type, *rect, cv2.contourArea(hull))
+                        if not pos.has_min_area():
+                            continue
+                        positions.append(pos)
+                        
+                field_x = borders[0]
+                field_y = borders[1]
+                field_width = borders[2] - borders[0]
+                field_height = borders[3] - borders[1]
 
                 for obj_id in obj_priority:
 
                     positions = possible_positions.get(obj_id)
-                    if positions is None:
+                    if positions is None or len(positions) == 0:
                         continue
 
                     obj_type = OBJ_TYPES[obj_id]
