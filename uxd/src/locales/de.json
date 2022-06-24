@@ -50,20 +50,21 @@
         "description": "Bestimme die Route des TurtleBots und nimm dabei die meisten Münzen mit, um den ersten Platz zu erhalten!"
     },
     "about": {
+        "team": "Team",
         "title": "Über uns",
         "summary": "Wir sind ein Team an der Technischen Hochschule Ingolstadt bestehend aus Studenten aus der Informatik Künstlichen Intelligenz und User Experience Design. Zusammen arbeiten wir an dem Projekt TurtleBot und haben basierend auf diesem ein Spiel entworfenen und technisch umgesetzt. Dafür gab es Subteams mit jeweils unterschiedlichen Aufgaben und Zielen, welche auf die Kenntnisse der Studiengänge zurückzuführen sind. Mit dem gemeinsamen Ziel ein cooles Spiel für Benutzer zu entwickeln haben wir viel von einander gelernt und präsentieren euch nun stolz unser Ergebnis!",
         "ki": {
-            "names": "Lukas, Dominik, Christian, Emanuel, Christian, Sophia, Corinna & Thomas (v.l.)",
-            "title": "Künstliche Intelligenz (KI)",
+            "names": "Lukas, Dominik, Christian, Emanuel, Christian, Sophia, Corinna & Thomas",
+            "title": "Künstliche Intelligenz",
             "content": "KI Studierende haben sich hauptsächlich mit dem TurtleBot beschäftigt und diesem durch Objekterkennung beigebracht, wie und welche Hindernisse sowie Figuren erkannt und angefahren werden. Durch zusätzliche Segmentierung und Lokalisierung wird das Feld erkannt und die Entfernung zu Objekten berechnet."
         },
         "inf": {
-            "names": "Alexander & Manuel (v.l.)",
+            "names": "Alexander & Manuel",
             "title": "Informatik",
             "content": "Um die Kommunikation zwischen dem TurtleBot und einem Server und dann wiederum einer Web-UI zu ermöglichen waren die Studierenden der Informatik unerlässlich. Dafür haben sie auch das angemessene Speichern und Weitergeben der Daten des TurtleBots eingerichtet und sich mit dem Robot Operating System auseinandergesetzt. Zu Ihrem Aufgabenbereich gehörte weiterhin das Durchführen von Unit-Tests. Diese Tests wurden entworfen, um die korrekte Funktionsweise der einzelnen Software-Komponenten verifizieren zu können."
         },
         "uxd": {
-            "names": "Antonio, Mai & Quirin (v.l.)",
+            "names": "Antonio, Mai & Quirin",
             "title": "User Experience Design (UXD)",
             "content": "Subteam UXD hat das Game Konzept entworfen und designed unter Nutzung der HCI Methoden und Werkzeugen wie Wireframes, Prototype und User Testings. Letztlich wurde das User Interface …Frontend …"
         }
