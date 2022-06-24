@@ -73,9 +73,9 @@ class ObjectDetection(RealsenseTopicReader):
         self.visualize = visualize
         self.client.send('turtlebot')
 
-    def handle_images(self, color_image, depth_image, color_timestamp, depth_timestamp, color_intrin):
+    def handle_images(self, color_image, depth_image, color_timestamp, depth_timestamp, depth_intrin):
         
-        super(ObjectDetection, self).handle_images(color_image, depth_image, color_timestamp, depth_timestamp, color_intrin)
+        super(ObjectDetection, self).handle_images(color_image, depth_image, color_timestamp, depth_timestamp, depth_intrin)
 
         color_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
         self.client.send(color_image)
@@ -106,7 +106,7 @@ class ObjectDetection(RealsenseTopicReader):
                 color = COLORS.get(obj_id, (0, 255, 255))
                 frame = cv2.circle(frame, (int(pos[0] * c_width), int(pos[1] * c_height)), 5, color, thickness=-1)
 
-            u, _, _ = rs.rs2_deproject_pixel_to_point(color_intrin, (x, y), distance)
+            u, _, _ = rs.rs2_deproject_pixel_to_point(depth_intrin, (x, y), distance)
             angle = math.asin(u / distance)
             detected_objects.append(ObjectPosition(obj_id, distance, angle))
 

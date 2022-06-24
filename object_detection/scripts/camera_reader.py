@@ -93,12 +93,12 @@ class RealsenseTopicReader(object):
     def read(self):
         self.color_subscriber = rospy.Subscriber(CITopic.color_img.value, CompressedImage, self.handle_color_image)
         self.depth_subscriber = rospy.Subscriber(CameraTopic.depth_img.value, Image, self.handle_depth_image)
-        self.color_info_subscriber = rospy.Subscriber(CameraTopic.camera_info_color.value, CameraInfo, self.handle_color_info)
-        # self.depth_info_subscriber = rospy.Subscriber(CameraTopic.camera_info_depth.value, CameraInfo, self.handle_depth_info)
+        # self.color_info_subscriber = rospy.Subscriber(CameraTopic.camera_info_depth.value, CameraInfo, self.handle_color_info)
+        self.depth_info_subscriber = rospy.Subscriber(CameraTopic.camera_info_depth.value, CameraInfo, self.handle_depth_info)
         rospy.spin()
 
     def handle_color_image(self, color_msg):
-        if self.depth_msg is not None and self.color_info is not None:
+        if self.depth_msg is not None and self.depth_info is not None:
 
             depth_img = self.bridge.imgmsg_to_cv2(self.depth_msg, desired_encoding='passthrough')
 
@@ -108,15 +108,19 @@ class RealsenseTopicReader(object):
             color_timestamp = color_msg.header.stamp.to_sec()
             depth_timestamp = self.depth_msg.header.stamp.to_sec()
             intrinsics = rs.intrinsics()
-            intrinsics.width = self.color_info.width
-            intrinsics.height = self.color_info.height
-            intrinsics.ppx = self.color_info.K[2]
-            intrinsics.ppy = self.color_info.K[5]
-            intrinsics.fx = self.color_info.K[0]
-            intrinsics.fy = self.color_info.K[4]
-            #intrinsics.model = cameraInfo.distortion_model
+            intrinsics.width = self.depth_info.width
+            intrinsics.height = self.depth_info.height
+            intrinsics.ppx = self.depth_info.K[2]
+            intrinsics.ppy = self.depth_info.K[5]
+            intrinsics.fx = self.depth_info.K[0]
+            intrinsics.fy = self.depth_info.K[4]
             intrinsics.model  = rs.distortion.none     
-            intrinsics.coeffs = [i for i in self.color_info.D]
+            intrinsics.coeffs = [i for i in self.depth_info.D]
+            if self.depth_info.distortion_model == 'plumb_bob':
+                intrinsics.model = rs.distortion.brown_conrady
+            elif self.depth_info.distortion_model == 'equidistant':
+                intrinsics.model = rs.distortion.kannala_brandt4
+            intrinsics.coeffs = [i for i in self.depth_info.D]
 
             self.handle_images(color_img, depth_img, color_timestamp, depth_timestamp, intrinsics)
 
@@ -129,7 +133,7 @@ class RealsenseTopicReader(object):
     def handle_depth_info(self, camera_info):
         self.depth_info = camera_info
 
-    def handle_images(self, color_image, depth_image, color_timestamp, depth_timestamp, color_intrin):
+    def handle_images(self, color_image, depth_image, color_timestamp, depth_timestamp, depth_intrin):
         pass
 
 
