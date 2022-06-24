@@ -1,13 +1,19 @@
 <template>
     <section class="content about">
         <h1 class="title">{{ $t('about.title') }}</h1>
-        <div>
-            <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">
-            <p class="col-2">{{ $t('about.summary') }}</p>
+        <div class="col-container col-2">
+            <div>
+                <img src="../../src/assets/images/About/gruppe.jpeg">
+            </div>
+            <div>
+                <h2>{{ $t('about.title') }}</h2>
+                <p>{{ $t('about.summary') }}</p>
+            </div>
         </div>
         <div class="col-container col-2">
             <div>
-                <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">
+                <img src="../../src/assets/images/About/ki1.jpeg">
+                <img src="../../src/assets/images/About/ki2.jpeg">
                 <h3 class="image-title">{{ $t('about.ki.names') }}</h3>
             </div>
             <div>
@@ -17,7 +23,7 @@
         </div>
         <div class="col-container col-2">
             <div>
-                <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">
+                <img src="../../src/assets/images/About/inf.jpeg">
                 <h3 class="image-title">{{ $t('about.inf.names') }}</h3>
             </div>
             <div>
@@ -27,7 +33,7 @@
         </div>
         <div class="col-container col-2">
             <div>
-                <img src="https://www.thi.de/fileadmin/daten/UeberUns/Campus/Campus_THIBau.jpg">
+                <img src="../../src/assets/images/About/uxd.jpeg">
                 <h3 class="image-title">{{ $t('about.uxd.names') }}</h3>
             </div>
             <div>
